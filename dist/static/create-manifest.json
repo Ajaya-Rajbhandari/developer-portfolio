@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "createdAt": "2026-01-22T10:30:07.178Z",
+  "workspaces": [
+    {
+      "name": "default",
+      "title": "Portfolio CMS",
+      "basePath": "/",
+      "projectId": "48v38ttl",
+      "dataset": "production",
+      "icon": null,
+      "mediaLibrary": {
+        "enabled": false
+      },
+      "schema": "03877204.create-schema.json",
+      "tools": "4277de03.create-tools.json"
+    }
+  ],
+  "studioVersion": "5.5.0"
+}

@@ -7,6 +7,7 @@ This is a personal portfolio website built with **Next.js 14**, **TypeScript**, 
 - **Modern & Premium Design**: Custom dark-mode aesthetic with neon accents.
 - **Responsive Layout**: Fully optimized for desktop and mobile.
 - **Dynamic Content**: Data-driven components for easy updates.
+- **CMS Integration**: Optional Sanity CMS support for content management.
 - **SEO Optimized**: Built with Next.js App Router.
 
 ## Tech Stack
@@ -14,6 +15,7 @@ This is a personal portfolio website built with **Next.js 14**, **TypeScript**, 
 - **Framework**: Next.js 14
 - **Language**: TypeScript
 - **Styling**: CSS Modules (Vanilla CSS)
+- **CMS**: Sanity.io (Optional)
 - **Deployment**: Vercel (Recommended)
 
 ## Getting Started
@@ -38,11 +40,25 @@ This is a personal portfolio website built with **Next.js 14**, **TypeScript**, 
 
 ## Customization
 
+### Option 1: Using Sanity CMS (Recommended)
+
+This portfolio supports Sanity CMS for easy content management. See [CMS_SETUP.md](./CMS_SETUP.md) for detailed setup instructions.
+
+**Benefits:**
+- Update content without code changes
+- Rich media management
+- Real-time updates
+- Free tier available
+
+### Option 2: Edit Local Data Files
+
 Edit the data files in `src/utils/data/` to update your information:
 - `personal-data.ts`
 - `experience.ts`
 - `skills.ts`
 - `projects-data.ts`
+
+**Note:** If Sanity CMS is configured, it will take priority over local data files.
 
 ## License
 

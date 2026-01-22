@@ -4,11 +4,46 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { personalData } from "@/utils/data/personal-data";
-import { skillsData } from "@/utils/data/skills";
-import { projectsData } from "@/utils/data/projects-data";
-import { experiences } from "@/utils/data/experience";
 import { FaGithub, FaLinkedin, FaTwitter, FaEnvelope, FaDownload, FaExternalLinkAlt, FaCode } from "react-icons/fa";
+
+interface Project {
+    id: number | string;
+    name: string;
+    description: string;
+    tools: string[];
+    role: string;
+    code: string;
+    demo: string;
+    image: string;
+}
+
+interface Experience {
+    id: number | string;
+    title: string;
+    company: string;
+    duration: string;
+}
+
+interface PersonalData {
+    name: string;
+    profile: string;
+    designation: string;
+    description: string;
+    email: string;
+    phone: string;
+    address: string;
+    github: string;
+    linkedIn: string;
+    twitter: string;
+    resume: string;
+}
+
+interface BentoGridProps {
+    projects: Project[];
+    skills: string[];
+    experiences: Experience[];
+    personalData: PersonalData;
+}
 
 const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -23,7 +58,7 @@ const scrollToSection = (id: string) => {
     }
 };
 
-export default function BentoGrid() {
+export default function BentoGrid({ projects, skills, experiences, personalData }: BentoGridProps) {
     return (
         <div className="min-h-screen p-4 md:p-8 pt-32 max-w-[1600px] mx-auto space-y-6">
             {/* Hero Section - Full Width */}
@@ -109,7 +144,7 @@ export default function BentoGrid() {
                 >
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-accent/20 to-secondary-accent/20 blur-2xl group-hover:blur-3xl transition-all duration-500" />
                     <Image
-                        src="/profile.png"
+                        src={personalData.profile || "/profile.png"}
                         alt="Profile"
                         fill
                         sizes="(max-width: 1024px) 100vw, 33vw"
@@ -154,7 +189,7 @@ export default function BentoGrid() {
                     <h2 className="text-3xl md:text-4xl font-bold">Tech Stack</h2>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {skillsData.map((skill, i) => (
+                    {skills.map((skill, i) => (
                         <motion.div
                             key={i}
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -221,7 +256,7 @@ export default function BentoGrid() {
                     <h2 className="text-3xl md:text-4xl font-bold">Featured Projects</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {projectsData.map((project, i) => (
+                    {projects.map((project, i) => (
                         <motion.div
                             key={project.id}
                             initial={{ opacity: 0, y: 20 }}

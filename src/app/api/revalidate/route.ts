@@ -3,6 +3,17 @@ import { revalidatePath } from "next/cache";
 
 const secret = process.env.REVALIDATE_SECRET;
 
+export async function GET() {
+  return NextResponse.json(
+    { 
+      message: "Revalidation endpoint - POST only",
+      note: "This endpoint only accepts POST requests from Sanity webhooks.",
+      status: "Endpoint is working correctly"
+    },
+    { status: 405 }
+  );
+}
+
 export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get("authorization")?.replace("Bearer ", "");

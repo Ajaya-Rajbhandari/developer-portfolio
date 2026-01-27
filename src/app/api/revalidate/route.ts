@@ -16,18 +16,22 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("Revalidation webhook called");
     const token = req.headers.get("authorization")?.replace("Bearer ", "");
     const body = await req.json().catch(() => ({}));
     const provided = body?.secret || token;
 
     if (secret && provided !== secret) {
+      console.error("Invalid revalidation secret");
       return NextResponse.json({ message: "Invalid token" }, { status: 401 });
     }
 
     const paths: string[] = body?.paths || ["/", "/projects"];
+    console.log("Revalidating paths:", paths);
 
     paths.forEach((path) => revalidatePath(path));
 
+    console.log("Revalidation successful");
     return NextResponse.json({ revalidated: true, paths });
   } catch (error) {
     console.error("Revalidate error", error);

@@ -1,4 +1,5 @@
 import { getProjects, getSkills, getExperiences, getPersonalData } from './sanity.queries'
+import { urlFor } from './sanity.image'
 import { projectsData } from '@/utils/data/projects-data'
 import { skillsData } from '@/utils/data/skills'
 import { experiences } from '@/utils/data/experience'
@@ -91,12 +92,22 @@ export async function fetchPersonalData() {
     try {
       const data = await getPersonalData()
       if (data) {
+        // Build high-quality profile image URL using Sanity's image builder
+        let profileUrl = data.profileImage || '/profile.png'
+        if (data.profileImageRef) {
+          profileUrl = urlFor(data.profileImageRef)
+            .width(3000)
+            .quality(100)
+            .format('jpg')
+            .url()
+        }
+        
         return {
           name: data.name,
           metaTitle: data.metaTitle || data.name,
           metaDescription: data.metaDescription || data.description,
-          ogImage: data.ogImage || data.profileImage || '/profile.png',
-          profile: data.profileImage || '/profile.png',
+          ogImage: data.ogImage || profileUrl || '/profile.png',
+          profile: profileUrl,
           designation: data.designation,
           description: data.description,
           email: data.email || '',

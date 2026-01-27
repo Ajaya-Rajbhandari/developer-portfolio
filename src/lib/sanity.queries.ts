@@ -56,6 +56,7 @@ export async function getPersonalData() {
       designation,
       description,
       "profileImage": profileImage.asset->url,
+      "profileImageRef": profileImage.asset,
       metaTitle,
       metaDescription,
       "ogImage": ogImage.asset->url,

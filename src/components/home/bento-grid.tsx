@@ -160,11 +160,12 @@ export default function BentoGrid({ projects, skills, experiences, personalData 
                     <HeroAccent />
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-accent/20 to-secondary-accent/20 blur-2xl group-hover:blur-3xl transition-all duration-500" />
                     <Image
-                        src={buildOptimizedUrl(personalData.profile || "/profile.png", 2000, 95)}
+                        src={personalData.profile || "/profile.png"}
                         alt="Profile"
                         fill
                         sizes="(max-width: 1024px) 100vw, 33vw"
-                        quality={95}
+                        quality={100}
+                        unoptimized={!!(personalData.profile && personalData.profile.includes("cdn.sanity.io"))}
                         priority
                         className="object-cover relative z-10 transition-transform duration-700 group-hover:scale-110"
                     />

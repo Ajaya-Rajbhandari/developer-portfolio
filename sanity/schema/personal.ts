@@ -1,4 +1,6 @@
 import { defineField, defineType } from 'sanity'
+import React from 'react'
+import { IsActiveInput } from '../components/IsActiveInput'
 
 export default defineType({
   name: 'personal',
@@ -12,6 +14,47 @@ export default defineType({
     },
   ],
   fields: [
+    defineField({
+      name: 'isActive',
+      title: 'Use This Profile',
+      type: 'boolean',
+      description: 'Only one profile can be active at a time. Activating this will automatically deactivate others. This profile will be displayed on your portfolio.',
+      initialValue: false,
+      components: {
+        input: IsActiveInput,
+      },
+      validation: (Rule) =>
+        Rule.custom(async (value, context) => {
+          const { document, getClient } = context
+          
+          // Skip validation if document or ID is missing
+          if (!document?._id) {
+            return true
+          }
+          
+          const client = getClient({ apiVersion: '2024-01-01' })
+          
+          // If trying to deactivate (value is false), check if this is the only active profile
+          if (value === false) {
+            try {
+              const otherActiveCount = await client.fetch(
+                `count(*[_type == "personal" && isActive == true && _id != $currentId])`,
+                { currentId: document._id }
+              )
+              
+              if (otherActiveCount === 0) {
+                return 'Cannot deactivate: This is the only active profile. At least one profile must remain active.'
+              }
+            } catch (error) {
+              // If there's an error fetching, allow the change
+              console.error('Error validating isActive:', error)
+              return true
+            }
+          }
+          
+          return true
+        }),
+    }),
     defineField({
       name: 'name',
       title: 'Full Name',
@@ -103,4 +146,19 @@ export default defineType({
       fieldset: 'seo',
     }),
   ],
+  preview: {
+    select: {
+      title: 'name',
+      subtitle: 'designation',
+      media: 'profileImage',
+      isActive: 'isActive',
+    },
+    prepare({ title, subtitle, media, isActive }) {
+      return {
+        title: `${title}${isActive ? ' (Active)' : ''}`,
+        subtitle,
+        media,
+      }
+    },
+  },
 })

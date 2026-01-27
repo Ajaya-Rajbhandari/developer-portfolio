@@ -49,8 +49,36 @@ export async function getExperiences() {
 }
 
 export async function getPersonalData() {
+  // Get the first active profile (ordered by creation date for consistency)
+  const activeProfile = await client.fetch(
+    groq`*[_type == "personal" && isActive == true] | order(_createdAt asc) [0] {
+      _id,
+      name,
+      designation,
+      description,
+      "profileImage": profileImage.asset->url,
+      "profileImageRef": profileImage.asset,
+      metaTitle,
+      metaDescription,
+      "ogImage": ogImage.asset->url,
+      email,
+      phone,
+      address,
+      github,
+      linkedIn,
+      twitter,
+      facebook,
+      resume
+    }`
+  )
+  
+  // If no active profile, fall back to the most recently created one
+  if (activeProfile) {
+    return activeProfile
+  }
+  
   return client.fetch(
-    groq`*[_type == "personal"][0] {
+    groq`*[_type == "personal"] | order(_createdAt desc) [0] {
       _id,
       name,
       designation,

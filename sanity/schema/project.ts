@@ -4,6 +4,13 @@ export default defineType({
   name: 'project',
   title: 'Project',
   type: 'document',
+  fieldsets: [
+    {
+      name: 'seo',
+      title: 'SEO & Social Sharing',
+      options: { collapsible: true, collapsed: false },
+    },
+  ],
   fields: [
     defineField({
       name: 'name',
@@ -73,6 +80,7 @@ export default defineType({
       title: 'Meta Title (SEO)',
       type: 'string',
       description: 'Defaults to project name if empty',
+      fieldset: 'seo',
     }),
     defineField({
       name: 'metaDescription',
@@ -80,6 +88,7 @@ export default defineType({
       type: 'text',
       rows: 3,
       description: 'Short summary for search and social previews',
+      fieldset: 'seo',
     }),
     defineField({
       name: 'ogImage',
@@ -87,6 +96,7 @@ export default defineType({
       type: 'image',
       options: { hotspot: true },
       description: 'Used for social sharing previews',
+      fieldset: 'seo',
     }),
   ],
   preview: {

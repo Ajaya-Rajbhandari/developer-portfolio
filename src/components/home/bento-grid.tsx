@@ -3,8 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { Card } from "@/components/ui/card";
 import { FaGithub, FaLinkedin, FaTwitter, FaEnvelope, FaDownload, FaExternalLinkAlt, FaCode } from "react-icons/fa";
+const HeroAccent = dynamic(() => import("../three/hero-accent"), {
+    ssr: false,
+    loading: () => (
+        <div className="absolute inset-6 rounded-3xl bg-gradient-to-br from-primary-accent/30 via-secondary-accent/20 to-transparent blur-2xl" />
+    ),
+});
 
 interface Project {
     id: number | string;
@@ -44,6 +51,14 @@ interface BentoGridProps {
     experiences: Experience[];
     personalData: PersonalData;
 }
+
+const buildOptimizedUrl = (src: string | undefined, width = 1200) => {
+    if (!src) return "/vercel.svg";
+    if (src.includes("cdn.sanity.io")) {
+        return `${src}?auto=format&w=${width}`;
+    }
+    return src;
+};
 
 const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -142,9 +157,10 @@ export default function BentoGrid({ projects, skills, experiences, personalData 
                     transition={{ delay: 0.4, duration: 0.6 }}
                     className="relative h-[400px] lg:h-full rounded-3xl overflow-hidden group"
                 >
+                    <HeroAccent />
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-accent/20 to-secondary-accent/20 blur-2xl group-hover:blur-3xl transition-all duration-500" />
                     <Image
-                        src={personalData.profile || "/profile.png"}
+                        src={buildOptimizedUrl(personalData.profile || "/profile.png", 900)}
                         alt="Profile"
                         fill
                         sizes="(max-width: 1024px) 100vw, 33vw"
@@ -267,10 +283,11 @@ export default function BentoGrid({ projects, skills, experiences, personalData 
                             <Card className="overflow-hidden group h-full flex flex-col hover:border-primary-accent/50 transition-all duration-300">
                                 <div className="relative h-48 overflow-hidden">
                                     <Image
-                                        src={typeof project.image === 'string' ? project.image : "/vercel.svg"}
+                                        src={buildOptimizedUrl(typeof project.image === 'string' ? project.image : "/vercel.svg")}
                                         alt={project.name}
                                         fill
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                        loading="lazy"
                                         className="object-cover group-hover:scale-110 transition-transform duration-500"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-bg-dark via-bg-dark/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

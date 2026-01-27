@@ -7,6 +7,9 @@ const outfit = Outfit({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Ajaya Rajbhandari - Developer Portfolio",
   description: "Portfolio of Ajaya Rajbhandari, a Full-Stack Software Developer.",
+  alternates: {
+    sitemap: "/sitemap.xml",
+  },
 };
 
 import Navbar from "@/components/navbar/navbar";
@@ -20,8 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={outfit.className}>
+        <a className="skip-to-content" href="#main-content">
+          Skip to main content
+        </a>
         <Navbar />
-        <main>{children}</main>
+        <main id="main-content" style={{ position: 'relative' }}>{children}</main>
         <Footer />
       </body>
     </html>

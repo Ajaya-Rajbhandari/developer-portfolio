@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ajayrajbhandari.com.np/sitemap.xml
+Host: https://ajayrajbhandari.com.np

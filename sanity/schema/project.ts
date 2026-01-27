@@ -68,6 +68,26 @@ export default defineType({
       type: 'number',
       initialValue: 0,
     }),
+    defineField({
+      name: 'metaTitle',
+      title: 'Meta Title (SEO)',
+      type: 'string',
+      description: 'Defaults to project name if empty',
+    }),
+    defineField({
+      name: 'metaDescription',
+      title: 'Meta Description (SEO)',
+      type: 'text',
+      rows: 3,
+      description: 'Short summary for search and social previews',
+    }),
+    defineField({
+      name: 'ogImage',
+      title: 'Open Graph Image',
+      type: 'image',
+      options: { hotspot: true },
+      description: 'Used for social sharing previews',
+    }),
   ],
   preview: {
     select: {

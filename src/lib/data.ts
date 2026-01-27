@@ -23,6 +23,10 @@ export async function fetchProjects() {
         return projects.map((project: any, index: number) => ({
           id: project._id || index + 1,
           name: project.name,
+          slug: project.slug?.current || '',
+          metaTitle: project.metaTitle || project.name,
+          metaDescription: project.metaDescription || project.description,
+          ogImage: project.ogImage || project.image || '/vercel.svg',
           description: project.description,
           tools: project.tools || [],
           role: project.role || '',
@@ -89,6 +93,9 @@ export async function fetchPersonalData() {
       if (data) {
         return {
           name: data.name,
+          metaTitle: data.metaTitle || data.name,
+          metaDescription: data.metaDescription || data.description,
+          ogImage: data.ogImage || data.profileImage || '/profile.png',
           profile: data.profileImage || '/profile.png',
           designation: data.designation,
           description: data.description,
@@ -112,4 +119,31 @@ export async function fetchPersonalData() {
   
   // Fallback to local data
   return personalData
+}
+
+export function buildPersonJsonLd(data: any) {
+  if (!data) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: data.name,
+    jobTitle: data.designation,
+    description: data.description,
+    email: data.email,
+    address: data.address,
+    url: data.github || data.linkedIn || '',
+    image: data.ogImage || data.profile,
+  }
+}
+
+export function buildProjectJsonLd(project: any) {
+  if (!project) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CreativeWork',
+    name: project.name,
+    description: project.metaDescription || project.description,
+    url: project.demo || project.code || '',
+    image: project.ogImage || project.image,
+  }
 }

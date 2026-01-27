@@ -7,9 +7,6 @@ const outfit = Outfit({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Ajaya Rajbhandari - Developer Portfolio",
   description: "Portfolio of Ajaya Rajbhandari, a Full-Stack Software Developer.",
-  alternates: {
-    sitemap: "/sitemap.xml",
-  },
 };
 
 import Navbar from "@/components/navbar/navbar";

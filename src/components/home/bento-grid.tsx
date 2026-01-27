@@ -52,10 +52,10 @@ interface BentoGridProps {
     personalData: PersonalData;
 }
 
-const buildOptimizedUrl = (src: string | undefined, width = 1200) => {
+const buildOptimizedUrl = (src: string | undefined, width = 1200, quality = 90) => {
     if (!src) return "/vercel.svg";
     if (src.includes("cdn.sanity.io")) {
-        return `${src}?auto=format&w=${width}`;
+        return `${src}?auto=format&w=${width}&q=${quality}`;
     }
     return src;
 };
@@ -160,11 +160,12 @@ export default function BentoGrid({ projects, skills, experiences, personalData 
                     <HeroAccent />
                     <div className="absolute inset-0 bg-gradient-to-br from-primary-accent/20 to-secondary-accent/20 blur-2xl group-hover:blur-3xl transition-all duration-500" />
                     <Image
-                        src={buildOptimizedUrl(personalData.profile || "/profile.png", 900)}
+                        src={buildOptimizedUrl(personalData.profile || "/profile.png", 2000, 95)}
                         alt="Profile"
                         fill
                         sizes="(max-width: 1024px) 100vw, 33vw"
-                        loading="eager"
+                        quality={95}
+                        priority
                         className="object-cover relative z-10 transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-bg-dark/60 via-transparent to-transparent z-20" />

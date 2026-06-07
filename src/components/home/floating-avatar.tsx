@@ -466,13 +466,13 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
   const { scrollY } = useScroll();
   const floatY = useTransform(scrollY, [0, 400], [0, 16]);
   const floatScale = useTransform(scrollY, [0, 400], [1, 1.02]);
-  const combinedY = useTransform([floatY, dragY], ([a, b]) => a + b);
+  const combinedY = useTransform([floatY, dragY], ([a, b]) => Number(a) + Number(b));
 
   const pupilX = useSpring(mouseX, { stiffness: 120, damping: 16 });
   const pupilY = useSpring(mouseY, { stiffness: 120, damping: 16 });
   const pupilScaleSpring = useSpring(pupilScale, { stiffness: 320, damping: 22 });
-  const eyeX = useTransform([pupilX, idleEyeX], ([a, b]) => a + b);
-  const eyeY = useTransform([pupilY, idleEyeY], ([a, b]) => a + b);
+  const eyeX = useTransform([pupilX, idleEyeX], ([a, b]) => Number(a) + Number(b));
+  const eyeY = useTransform([pupilY, idleEyeY], ([a, b]) => Number(a) + Number(b));
   const headTilt = useTransform(mouseX, [-10, 10], [5, -5]);
   const [isUserIdle, setIsUserIdle] = useState(false);
   const [unlocked] = useState(true);

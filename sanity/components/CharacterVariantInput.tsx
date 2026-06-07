@@ -1,5 +1,6 @@
 import React, {useCallback} from 'react'
-import {set, type StringInputProps} from 'sanity'
+import {set} from 'sanity';
+import type {StringInputProps} from 'sanity';
 
 type VariantValue = 'developer' | 'creator' | 'minimal' | 'explorer' | 'techLead' | 'aiBuilder'
 

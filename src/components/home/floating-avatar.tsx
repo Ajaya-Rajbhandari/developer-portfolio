@@ -46,6 +46,8 @@ const safeAssetUrl = (value: unknown) => {
   return /^https?:\/\//i.test(trimmed) || trimmed.startsWith("/") ? trimmed : "";
 };
 
+const AVATAR_POSITION_KEY = "portfolio-avatar-position-v2";
+
 export type MouthExpression = "neutral" | "smile" | "surprised" | "sad" | "talking";
 type MoodDetail = { expression: MouthExpression; duration?: number };
 
@@ -510,7 +512,7 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem("portfolio-avatar-position");
+      const saved = window.localStorage.getItem(AVATAR_POSITION_KEY);
       if (!saved) return;
       const parsed = JSON.parse(saved) as { x?: unknown; y?: unknown };
       if (typeof parsed.x === "number") dragX.set(parsed.x);
@@ -816,15 +818,20 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
     const compute = () => {
       const padding = 12;
       const rect = avatarRef.current?.getBoundingClientRect();
-      const width = rect?.width ?? 180;
-      const height = rect?.height ?? 220;
       const vw = window.innerWidth || 0;
       const vh = window.innerHeight || 0;
-      const left = -(vw - width - padding * 2);
-      const right = padding;
-      const top = -(vh - height - padding * 2);
-      const bottom = padding;
-      setDragConstraints({ left, right, top, bottom });
+
+      if (!rect) {
+        setDragConstraints({ left: -400, right: 12, top: -400, bottom: 300 });
+        return;
+      }
+
+      setDragConstraints({
+        left: padding - rect.left,
+        right: vw - padding - rect.right,
+        top: padding - rect.top,
+        bottom: vh - padding - rect.bottom,
+      });
     };
     compute();
     window.addEventListener("resize", compute);
@@ -861,10 +868,10 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
     [mouth]
   );
 
-  const speechBubbleClassName = `absolute top-4 z-[60] w-64 max-w-[72vw] rounded-2xl border border-primary-accent/40 bg-bg-card px-4 py-3 text-sm leading-snug text-text-primary shadow-2xl shadow-black/25 ring-1 ring-border-light backdrop-blur-xl sm:top-7 sm:w-72 ${
+  const speechBubbleClassName = `absolute top-1 z-[60] w-60 max-w-[72vw] rounded-2xl border border-primary-accent/40 bg-bg-card/95 px-4 py-3 text-sm leading-snug text-text-primary shadow-2xl shadow-black/30 ring-1 ring-border-light backdrop-blur-2xl sm:w-64 lg:top-2 ${
     speechPlacement === "right"
-      ? "left-[calc(100%-0.35rem)] before:absolute before:left-[-0.45rem] before:top-10 before:h-4 before:w-4 before:rotate-45 before:border-b before:border-l before:border-primary-accent/40 before:bg-bg-card"
-      : "right-[calc(100%-0.35rem)] before:absolute before:right-[-0.45rem] before:top-10 before:h-4 before:w-4 before:rotate-45 before:border-r before:border-t before:border-primary-accent/40 before:bg-bg-card"
+      ? "left-[calc(100%-0.15rem)] before:absolute before:left-[-0.45rem] before:top-9 before:h-4 before:w-4 before:rotate-45 before:border-b before:border-l before:border-primary-accent/40 before:bg-bg-card"
+      : "right-[calc(100%-0.15rem)] lg:right-[calc(100%-1.15rem)] before:absolute before:right-[-0.45rem] before:top-9 before:h-4 before:w-4 before:rotate-45 before:border-r before:border-t before:border-primary-accent/40 before:bg-bg-card"
   }`;
 
   // Listen for external mouth change requests (e.g., button hovers)
@@ -895,7 +902,7 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
         scale: floatScale,
       }}
       ref={avatarRef}
-      className="fixed bottom-5 right-3 sm:bottom-8 sm:right-8 z-50 pointer-events-auto select-none"
+      className="fixed bottom-5 right-3 z-50 pointer-events-auto select-none sm:bottom-8 sm:right-8 lg:bottom-auto lg:top-28 lg:right-[max(1rem,calc((100vw-1200px)/2+0.75rem))]"
       aria-hidden
       drag={unlocked}
       dragMomentum={false}
@@ -912,7 +919,7 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
         isDraggingRef.current = false;
         try {
           window.localStorage.setItem(
-            "portfolio-avatar-position",
+            AVATAR_POSITION_KEY,
             JSON.stringify({ x: dragX.get(), y: dragY.get() })
           );
         } catch {
@@ -1084,9 +1091,10 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
         initial={{ opacity: 0, y: 14, scale: 0.7 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.42 }}
-        className="pointer-events-none relative z-20 -mt-3 ml-auto mr-1 w-fit rounded-full border border-primary-accent/30 bg-bg-card/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-secondary shadow-lg shadow-primary-accent/10 backdrop-blur-md"
+        className="pointer-events-none relative z-20 -mt-2 ml-auto mr-1 flex w-fit items-center gap-1.5 rounded-full border border-border-light bg-bg-card/95 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] shadow-lg shadow-primary-accent/10 backdrop-blur-md"
       >
-        <span className="text-primary-accent">{preset.label.replace(" character", "")}</span> · {personalityBehavior.label}
+        <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-orange-500">{preset.label.replace(" character", "")}</span>
+        <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-purple-500">{personalityBehavior.label}</span>
       </motion.div>
     </motion.div>
   );

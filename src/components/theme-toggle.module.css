@@ -35,7 +35,9 @@
   display: grid;
   place-items: center;
   font-size: 0.82rem;
-  transition: color 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+  opacity: 0.62;
+  transform: scale(0.92);
+  transition: color 0.25s ease, opacity 0.25s ease, transform 0.25s ease, filter 0.25s ease;
 }
 
 .sun {
@@ -46,9 +48,16 @@
   color: #a78bfa;
 }
 
+.sun[data-active="true"],
+.moon[data-active="true"] {
+  opacity: 1;
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
 .thumb {
   position: absolute;
-  z-index: 2;
+  z-index: 0;
   left: 0.23rem;
   top: 0.23rem;
   display: grid;
@@ -57,10 +66,17 @@
   place-items: center;
   border-radius: 999px;
   background: var(--theme-toggle-thumb-bg, linear-gradient(135deg, #2e1065, #0891b2));
-  color: var(--theme-toggle-thumb-fg, #ffffff);
   box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.65);
   transform: translateX(0);
   transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), background 0.25s ease, color 0.25s ease;
+}
+
+.thumbCore {
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 999px;
+  background: var(--theme-toggle-thumb-fg, #ffffff);
+  box-shadow: 0 0 16px var(--theme-toggle-thumb-fg, rgba(255, 255, 255, 0.9));
 }
 
 .thumb[data-theme="light"] {

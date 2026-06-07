@@ -46,10 +46,10 @@ export default function ThemeToggle() {
       data-mounted={mounted}
     >
       <span className={styles.track} aria-hidden="true">
-        <span className={styles.sun}><FaSun /></span>
-        <span className={styles.moon}><FaMoon /></span>
+        <span className={styles.sun} data-active={isLight}><FaSun /></span>
+        <span className={styles.moon} data-active={!isLight}><FaMoon /></span>
         <span className={styles.thumb} data-theme={theme}>
-          {isLight ? <FaSun /> : <FaMoon />}
+          <span className={styles.thumbCore} />
         </span>
       </span>
     </button>

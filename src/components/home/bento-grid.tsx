@@ -339,7 +339,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.35, duration: 0.5 }}
-          className="relative h-[420px] lg:h-full rounded-3xl overflow-hidden group bg-gradient-to-br from-primary-accent/10 via-bg-card to-secondary-accent/10 border border-border-light"
+          className="relative h-[420px] lg:h-full rounded-3xl overflow-hidden group bg-gradient-to-br from-primary-accent/10 via-bg-card to-secondary-accent/10 border border-border-light lg:mt-6"
         >
           <HeroAccent />
           <div className="absolute inset-6 rounded-3xl bg-gradient-to-br from-primary-accent/15 via-secondary-accent/10 to-transparent blur-2xl group-hover:blur-3xl transition-all duration-500" />
@@ -355,6 +355,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
           />
           <div className="absolute inset-0 z-20 bg-gradient-to-t from-image-overlay-from via-image-overlay-via to-transparent" />
           <div className="absolute inset-0 z-20 bg-gradient-to-r from-bg-card/45 via-transparent to-bg-card/20" />
+          <div className="pointer-events-none absolute right-0 top-0 z-20 h-40 w-40 rounded-bl-[4rem] bg-bg-card/45 blur-xl lg:h-48 lg:w-48" />
           <div className="absolute bottom-4 left-4 right-4 z-30 rounded-2xl border border-border-light bg-bg-card/90 p-4 text-text-primary shadow-2xl shadow-black/20 backdrop-blur-xl">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-accent">Available for focused product work</p>
             <p className="mt-1 text-sm leading-snug text-text-secondary">{personalData.designation}</p>

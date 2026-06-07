@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { motion as baseMotion } from "framer-motion";
 import { useEffect } from "react";
 import styles from "./navbar.module.css";
+import ThemeToggle from "@/components/theme-toggle";
 import { FaHome, FaUser, FaCode, FaBriefcase, FaEnvelope, FaBookOpen } from "react-icons/fa";
 
 type LocalMotionProps = {
@@ -114,6 +115,9 @@ function Navbar({ labels }: NavbarProps) {
                             </Link>
                         </li>
                     ))}
+                    <li className={styles.themeItem}>
+                        <ThemeToggle />
+                    </li>
                 </ul>
             </motion.nav>
         </div>

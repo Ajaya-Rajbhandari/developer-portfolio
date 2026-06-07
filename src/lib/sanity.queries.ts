@@ -19,14 +19,14 @@ export async function getProjects() {
       demo,
       code,
       featured,
-      order
-    }`
+    }
+  `
   )
 }
 
 export async function getArticles() {
   return client.fetch(
-    groq`*[_type == "article"] | order(order asc, publishedAt desc) {
+    groq`*[_type == "article"] | order(featured desc, publishedAt desc, _createdAt desc) {
       _id,
       title,
       slug,
@@ -36,154 +36,96 @@ export async function getArticles() {
       url,
       publishedAt,
       featured,
-      order
-    }`
+    }
+  `
   )
 }
 
 export async function getSkills() {
   return client.fetch(
-    groq`*[_type == "skill"] | order(order asc) {
+    groq`*[_type == "skill"] | order(order asc, name asc) {
       _id,
       name,
-      category,
-      order
-    }`
+    }
+  `
   )
 }
 
 export async function getExperiences() {
   return client.fetch(
-    groq`*[_type == "experience"] | order(order asc) {
+    groq`*[_type == "experience"] | order(order asc, _createdAt desc) {
       _id,
       title,
       company,
       duration,
-      startDate,
-      endDate,
-      description,
-      order
-    }`
+    }
+  `
   )
 }
 
-const usableCharacterFilter = groq`(
-  (renderMode == "animatedRig" && defined(characterVariant)) ||
-  (
-    renderMode == "staticAsset" &&
-    (defined(avatarImage.asset) || defined(avatarSvg.asset))
-  )
-)`
-
-const personalDataProjection = groq`{
-  _id,
-  name,
-  designation,
-  description,
-  "profileImage": profileImage.asset->url,
-  "profileImageRef": profileImage.asset,
-  metaTitle,
-  metaDescription,
-  "ogImage": ogImage.asset->url,
-  email,
-  phone,
-  address,
-  github,
-  linkedIn,
-  twitter,
-  facebook,
-  resume,
-  availabilityStatus,
-  availabilityLabel,
-  availabilityNote,
-  heroEyebrow,
-  heroSubtitle,
-  heroSummary,
-  primaryCtaLabel,
-  secondaryCtaLabel,
-  resumeCtaLabel,
-  featuredWorkLabel,
-  aboutSectionTitle,
-  aboutHighlights,
-  aboutBringTitle,
-  aboutBringItems,
-  skillsSectionTitle,
-  skillsCountSuffix,
-  experienceSectionTitle,
-  projectsEyebrow,
-  projectsSectionTitle,
-  projectsSectionDescription,
-  projectsCountLabel,
-  writingEyebrow,
-  writingSectionTitle,
-  writingSectionDescription,
-  writingBadgeLabel,
-  contactEyebrow,
-  contactTitle,
-  contactDescription,
-  contactCards,
-  emailCtaLabel,
-  navLabels,
-  footerText,
-  footerOwnerName,
-  footerLink,
-  "activeCharacter": coalesce(
-    *[
-      _type == "character" &&
-      _id == ^.activeCharacter._ref &&
-      ${usableCharacterFilter}
-    ][0] {
-      _id,
-      title,
-      renderMode,
-      characterVariant,
-      personality,
-      message,
-      "avatarImage": avatarImage.asset->url,
-      "avatarSvg": avatarSvg.asset->url
-    },
-    *[
-      _type == "character" &&
-      isDefault == true &&
-      ${usableCharacterFilter}
-    ] | order(_updatedAt desc)[0] {
-      _id,
-      title,
-      renderMode,
-      characterVariant,
-      personality,
-      message,
-      "avatarImage": avatarImage.asset->url,
-      "avatarSvg": avatarSvg.asset->url
-    },
-    *[
-      _type == "character" &&
-      ${usableCharacterFilter}
-    ] | order(_updatedAt desc)[0] {
-      _id,
-      title,
-      renderMode,
-      characterVariant,
-      personality,
-      message,
-      "avatarImage": avatarImage.asset->url,
-      "avatarSvg": avatarSvg.asset->url
-    }
-  )
-}`
-
 export async function getPersonalData() {
-  // Get the first active profile (ordered by creation date for consistency)
-  const activeProfile = await client.fetch(
-    groq`*[_type == "personal" && isActive == true] | order(_createdAt asc) [0] ${personalDataProjection}`
-  )
-  
-  // If no active profile, fall back to the most recently created one
-  if (activeProfile) {
-    return activeProfile
-  }
-  
   return client.fetch(
-    groq`*[_type == "personal"] | order(_createdAt desc) [0] ${personalDataProjection}`
+    groq`*[_type == "personal" && isActive == true][0] {
+      name,
+      metaTitle,
+      metaDescription,
+      description,
+      "ogImage": ogImage.asset->url,
+      "profileImage": profileImage.asset->url,
+      "profileImageRef": profileImage,
+      designation,
+      email,
+      phone,
+      address,
+      github,
+      facebook,
+      linkedIn,
+      twitter,
+      resume,
+      availabilityStatus,
+      availabilityLabel,
+      availabilityNote,
+      heroEyebrow,
+      heroSubtitle,
+      heroSummary,
+      primaryCtaLabel,
+      secondaryCtaLabel,
+      resumeCtaLabel,
+      featuredWorkLabel,
+      aboutSectionTitle,
+      aboutHighlights,
+      aboutBringTitle,
+      aboutBringItems,
+      skillsSectionTitle,
+      skillsCountSuffix,
+      experienceSectionTitle,
+      projectsEyebrow,
+      projectsSectionTitle,
+      projectsSectionDescription,
+      projectsCountLabel,
+      writingEyebrow,
+      writingSectionTitle,
+      writingSectionDescription,
+      writingBadgeLabel,
+      contactEyebrow,
+      contactTitle,
+      contactDescription,
+      contactCards,
+      emailCtaLabel,
+      navLabels,
+      footerText,
+      footerOwnerName,
+      footerLink,
+      activeCharacter->{
+        _id,
+        title,
+        renderMode,
+        characterVariant,
+        personality,
+        message,
+        "avatarImage": avatarImage.asset->url,
+        avatarSvg,
+      },
+    }`
   )
 }

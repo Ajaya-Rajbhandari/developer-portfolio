@@ -1,0 +1,112 @@
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 4.2rem;
+  height: 2.2rem;
+  padding: 0 0.55rem;
+  overflow: hidden;
+  border: 1px solid var(--theme-toggle-border, var(--border-light));
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 25% 35%, var(--theme-toggle-glow-a, rgba(109, 40, 217, 0.35)), transparent 35%),
+    radial-gradient(circle at 78% 65%, var(--theme-toggle-glow-b, rgba(6, 182, 212, 0.28)), transparent 40%),
+    var(--theme-toggle-bg, rgba(18, 18, 18, 0.8));
+  box-shadow: var(--theme-toggle-shadow, 0 12px 30px -18px rgba(0, 0, 0, 0.8));
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.sun,
+.moon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  font-size: 0.82rem;
+  transition: color 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+}
+
+.sun {
+  color: #f59e0b;
+}
+
+.moon {
+  color: #a78bfa;
+}
+
+.thumb {
+  position: absolute;
+  z-index: 2;
+  left: 0.23rem;
+  top: 0.23rem;
+  display: grid;
+  width: 1.72rem;
+  height: 1.72rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--theme-toggle-thumb-bg, linear-gradient(135deg, #2e1065, #0891b2));
+  color: var(--theme-toggle-thumb-fg, #ffffff);
+  box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.65);
+  transform: translateX(0);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), background 0.25s ease, color 0.25s ease;
+}
+
+.thumb[data-theme="light"] {
+  transform: translateX(1.96rem);
+}
+
+.toggle:hover .track {
+  border-color: var(--primary-accent);
+}
+
+.toggle:hover .thumb {
+  transform: translateX(0) scale(1.04);
+}
+
+.toggle:hover .thumb[data-theme="light"] {
+  transform: translateX(1.96rem) scale(1.04);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--secondary-accent);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+@media (max-width: 520px) {
+  .track {
+    width: 3.45rem;
+    height: 2rem;
+    padding: 0 0.42rem;
+  }
+
+  .sun,
+  .moon {
+    font-size: 0.72rem;
+  }
+
+  .thumb {
+    width: 1.54rem;
+    height: 1.54rem;
+  }
+
+  .thumb[data-theme="light"] {
+    transform: translateX(1.46rem);
+  }
+
+  .toggle:hover .thumb[data-theme="light"] {
+    transform: translateX(1.46rem) scale(1.04);
+  }
+}

@@ -457,7 +457,6 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
     top: -400,
     bottom: 12,
   });
-  const snapFrame = useRef<number | null>(null);
   const isDraggingRef = useRef(false);
   const targetX = useRef(0);
   const targetY = useRef(0);
@@ -510,28 +509,16 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
   }, [animation.idleMouths, personalityBehavior.mouths]);
 
   useEffect(() => {
-    const unsub = scrollY.on("change", (value: number) => {
-      if (value < 200 && !isDraggingRef.current) {
-        const step = () => {
-          const k = 0.15;
-          const nextX = dragX.get() * (1 - k);
-          const nextY = dragY.get() * (1 - k);
-          dragX.set(Math.abs(nextX) < 0.5 ? 0 : nextX);
-          dragY.set(Math.abs(nextY) < 0.5 ? 0 : nextY);
-          if (Math.abs(nextX) >= 0.5 || Math.abs(nextY) >= 0.5) {
-            snapFrame.current = requestAnimationFrame(step);
-          } else {
-            snapFrame.current = null;
-          }
-        };
-        if (!snapFrame.current) snapFrame.current = requestAnimationFrame(step);
-      }
-    });
-    return () => {
-      unsub();
-      if (snapFrame.current) cancelAnimationFrame(snapFrame.current);
-    };
-  }, [scrollY, dragX, dragY]);
+    try {
+      const saved = window.localStorage.getItem("portfolio-avatar-position");
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as { x?: unknown; y?: unknown };
+      if (typeof parsed.x === "number") dragX.set(parsed.x);
+      if (typeof parsed.y === "number") dragY.set(parsed.y);
+    } catch {
+      // Ignore corrupt saved positions and keep the default bottom-right placement.
+    }
+  }, [dragX, dragY]);
 
   useEffect(() => {
     if (prefersReduced) return;
@@ -603,7 +590,6 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
       if (blinkTimer.current) clearTimeout(blinkTimer.current);
       if (promptTimer.current) clearTimeout(promptTimer.current);
       if (typewriterTimer.current) clearTimeout(typewriterTimer.current);
-      if (snapFrame.current) cancelAnimationFrame(snapFrame.current);
     };
   }, [mouseX, mouseY, prefersReduced]);
 
@@ -875,10 +861,10 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
     [mouth]
   );
 
-  const speechBubbleClassName = `absolute top-4 z-[60] w-64 max-w-[72vw] rounded-2xl border border-primary-accent/35 bg-bg-card/95 px-4 py-3 text-sm leading-snug text-text-primary shadow-2xl shadow-primary-accent/10 backdrop-blur-md sm:top-7 sm:w-72 ${
+  const speechBubbleClassName = `absolute top-4 z-[60] w-64 max-w-[72vw] rounded-2xl border border-primary-accent/40 bg-bg-card px-4 py-3 text-sm leading-snug text-text-primary shadow-2xl shadow-black/25 ring-1 ring-border-light backdrop-blur-xl sm:top-7 sm:w-72 ${
     speechPlacement === "right"
-      ? "left-[calc(100%-0.35rem)] before:absolute before:left-[-0.45rem] before:top-10 before:h-4 before:w-4 before:rotate-45 before:border-b before:border-l before:border-primary-accent/35 before:bg-bg-card/95"
-      : "right-[calc(100%-0.35rem)] before:absolute before:right-[-0.45rem] before:top-10 before:h-4 before:w-4 before:rotate-45 before:border-r before:border-t before:border-primary-accent/35 before:bg-bg-card/95"
+      ? "left-[calc(100%-0.35rem)] before:absolute before:left-[-0.45rem] before:top-10 before:h-4 before:w-4 before:rotate-45 before:border-b before:border-l before:border-primary-accent/40 before:bg-bg-card"
+      : "right-[calc(100%-0.35rem)] before:absolute before:right-[-0.45rem] before:top-10 before:h-4 before:w-4 before:rotate-45 before:border-r before:border-t before:border-primary-accent/40 before:bg-bg-card"
   }`;
 
   // Listen for external mouth change requests (e.g., button hovers)
@@ -924,6 +910,14 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
       onDragEnd={() => {
         setMouth("smile");
         isDraggingRef.current = false;
+        try {
+          window.localStorage.setItem(
+            "portfolio-avatar-position",
+            JSON.stringify({ x: dragX.get(), y: dragY.get() })
+          );
+        } catch {
+          // Position persistence is optional; dragging still works if storage is unavailable.
+        }
       }}
     >
       {showDragPrompt && unlocked && (

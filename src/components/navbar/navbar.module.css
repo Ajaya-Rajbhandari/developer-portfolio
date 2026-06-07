@@ -11,13 +11,13 @@
 }
 
 .navbar {
-    background: rgba(18, 18, 18, 0.6);
+    background: var(--nav-bg, rgba(18, 18, 18, 0.6));
     backdrop-filter: blur(12px);
     border: 1px solid var(--border-light);
     padding: 0.5rem 1rem;
     border-radius: 50px;
     pointer-events: auto;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--nav-shadow, 0 10px 30px -10px rgba(0, 0, 0, 0.5));
 }
 
 .navList {
@@ -44,7 +44,13 @@
 
 .navItem:hover {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--surface-muted, rgba(255, 255, 255, 0.05));
+}
+
+.themeItem {
+    display: flex;
+    align-items: center;
+    margin-left: 0.25rem;
 }
 
 .icon {
@@ -58,5 +64,24 @@
 @media (min-width: 768px) {
     .label {
         display: block;
+    }
+}
+
+@media (max-width: 520px) {
+    .navbar {
+        max-width: calc(100vw - 1rem);
+        padding: 0.42rem;
+    }
+
+    .navList {
+        gap: 0.2rem;
+    }
+
+    .navItem {
+        padding: 0.5rem 0.58rem;
+    }
+
+    .themeItem {
+        margin-left: 0.05rem;
     }
 }

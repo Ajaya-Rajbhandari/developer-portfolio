@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const outfit = Outfit({ subsets: ["latin"] });
@@ -22,8 +23,11 @@ export default async function RootLayout({
   const personalData = await fetchPersonalData();
 
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
       <body className={outfit.className}>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`try{var t=localStorage.getItem('portfolio-theme');var m=t==='light'?'light':'dark';document.documentElement.dataset.theme=m;document.documentElement.style.colorScheme=m;}catch(e){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark';}`}
+        </Script>
         <a className="skip-to-content" href="#main-content">
           Skip to main content
         </a>

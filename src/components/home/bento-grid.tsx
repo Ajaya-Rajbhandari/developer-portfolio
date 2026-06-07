@@ -251,7 +251,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
               transition={{ delay: 0.25, duration: 0.45 }}
               className="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight"
             >
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-gray-400">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[var(--hero-name-from)] via-[var(--hero-name-via)] to-[var(--hero-name-to)]">
                 {personalData.name.split(" ")[0]}
               </span>
               <br />
@@ -289,7 +289,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                 setAvatarMood("talking", 900);
                 scrollToSection("contact");
               }}
-              className="px-8 py-4 bg-gradient-to-r from-primary-accent to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-primary-accent/40 transition-all duration-200 hover:scale-105"
+              className="px-8 py-4 bg-gradient-to-r from-primary-accent to-button-gradient-to text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-primary-accent/40 transition-all duration-200 hover:scale-105"
             >
               {personalData.primaryCtaLabel}
             </button>
@@ -297,7 +297,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
               onMouseEnter={() => setAvatarMood("smile")}
               onMouseLeave={() => setAvatarMood("neutral")}
               onClick={() => scrollToSection("projects")}
-              className="px-8 py-4 border-2 border-border-light text-text-primary rounded-xl font-semibold hover:bg-white/5 hover:border-primary-accent transition-all duration-200 flex items-center gap-2"
+              className="px-8 py-4 border-2 border-border-light text-text-primary rounded-xl font-semibold hover:bg-surface-muted hover:border-primary-accent transition-all duration-200 flex items-center gap-2"
             >
               {personalData.secondaryCtaLabel}
             </button>
@@ -309,7 +309,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                 onMouseEnter={() => setAvatarMood("smile")}
                 onMouseLeave={() => setAvatarMood("neutral")}
                 onClick={() => setAvatarMood("talking", 900)}
-                className="px-8 py-4 border-2 border-border-light text-text-primary rounded-xl font-semibold hover:bg-white/5 hover:border-primary-accent transition-all duration-200 flex items-center gap-2"
+                className="px-8 py-4 border-2 border-border-light text-text-primary rounded-xl font-semibold hover:bg-surface-muted hover:border-primary-accent transition-all duration-200 flex items-center gap-2"
               >
                 <FaDownload /> {personalData.resumeCtaLabel}
               </a>
@@ -325,7 +325,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
               <button
                 key={project.id}
                 onClick={() => scrollToSection("projects")}
-                className="text-left rounded-2xl border border-border-light bg-white/[0.03] p-4 hover:border-primary-accent/60 hover:bg-white/[0.06] transition-all duration-200"
+                className="text-left rounded-2xl border border-border-light bg-surface-soft p-4 hover:border-primary-accent/60 hover:bg-surface-muted transition-all duration-200"
               >
                 <span className="text-xs uppercase tracking-wider text-primary-accent font-semibold">{personalData.featuredWorkLabel}</span>
                 <p className="mt-2 text-sm font-semibold text-text-primary line-clamp-2">{project.name}</p>
@@ -353,7 +353,12 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
             priority
             className="object-cover relative z-10 transition-transform duration-700 group-hover:scale-110"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-bg-dark/50 via-transparent to-transparent z-20" />
+          <div className="absolute inset-0 z-20 bg-gradient-to-t from-image-overlay-from via-image-overlay-via to-transparent" />
+          <div className="absolute inset-0 z-20 bg-gradient-to-r from-bg-card/45 via-transparent to-bg-card/20" />
+          <div className="absolute bottom-4 left-4 right-4 z-30 rounded-2xl border border-border-light bg-bg-card/90 p-4 text-text-primary shadow-2xl shadow-black/20 backdrop-blur-xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-accent">Available for focused product work</p>
+            <p className="mt-1 text-sm leading-snug text-text-secondary">{personalData.designation}</p>
+          </div>
         </motion.div>
       </motion.div>
 
@@ -376,7 +381,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
               <p className="text-lg text-text-secondary leading-relaxed max-w-[68ch]">{personalData.description}</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {personalData.aboutHighlights.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-border-light bg-white/[0.03] p-4">
+                  <div key={item.label} className="rounded-2xl border border-border-light bg-surface-soft p-4">
                     <p className="text-xs uppercase tracking-wider text-primary-accent font-semibold">{item.label}</p>
                     <p className="mt-2 text-sm text-text-primary font-medium">{item.value}</p>
                   </div>
@@ -420,7 +425,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
               viewport={{ once: true }}
               transition={{ delay: i * 0.05, duration: 0.3 }}
             >
-              <Card className="p-6 h-full hover:border-primary-accent/40 hover:bg-white/5 transition-all duration-200">
+              <Card className="p-6 h-full hover:border-primary-accent/40 hover:bg-surface-muted transition-all duration-200">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-primary-accent/70" />
@@ -467,7 +472,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
               transition={{ delay: i * 0.1, duration: 0.5 }}
             >
               <Card className="p-6 hover:border-primary-accent/40 transition-all duration-200 relative md:pl-8">
-                <div className="absolute -left-6 top-8 h-3 w-3 rounded-full bg-primary-accent shadow-[0_0_0_6px_rgba(109,40,217,0.15)]" />
+                <div className="absolute -left-6 top-8 h-3 w-3 rounded-full bg-primary-accent shadow-[0_0_0_6px_var(--timeline-ring)]" />
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
                     <h3 className="text-xl font-bold text-text-primary mb-1">{exp.title}</h3>
@@ -501,7 +506,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
               </p>
             </div>
           </div>
-          <div className="rounded-2xl border border-border-light bg-white/[0.03] px-4 py-3 text-sm text-text-secondary">
+          <div className="rounded-2xl border border-border-light bg-surface-soft px-4 py-3 text-sm text-text-secondary">
             <span className="font-semibold text-text-primary">{projects.length}</span> {personalData.projectsCountLabel}
           </div>
         </div>
@@ -524,8 +529,8 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                     loading="lazy"
                     className="object-cover group-hover:scale-110 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-bg-dark via-bg-dark/35 to-transparent opacity-70" />
-                  <div className="absolute left-4 top-4 rounded-full border border-white/15 bg-bg-dark/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                  <div className="absolute inset-0 bg-gradient-to-t from-image-overlay-from via-image-overlay-via to-transparent opacity-70" />
+                  <div className="absolute left-4 top-4 rounded-full border border-border-light bg-case-badge-bg px-3 py-1 text-xs font-semibold text-case-badge-text backdrop-blur">
                     Case Study {String(i + 1).padStart(2, "0")}
                   </div>
                 </div>
@@ -536,11 +541,11 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5 text-sm">
-                    <div className="rounded-2xl border border-border-light bg-white/[0.03] p-4">
+                    <div className="rounded-2xl border border-border-light bg-surface-soft p-4">
                       <p className="text-xs uppercase tracking-wider text-primary-accent font-semibold mb-2">Problem</p>
                       <p className="text-text-secondary leading-relaxed">{project.problem || "Designed and built a focused web experience around a clear user need."}</p>
                     </div>
-                    <div className="rounded-2xl border border-border-light bg-white/[0.03] p-4">
+                    <div className="rounded-2xl border border-border-light bg-surface-soft p-4">
                       <p className="text-xs uppercase tracking-wider text-secondary-accent font-semibold mb-2">Outcome</p>
                       <p className="text-text-secondary leading-relaxed">{project.outcome || "Delivered a responsive implementation with practical functionality and clean interactions."}</p>
                     </div>
@@ -656,12 +661,12 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                   href={article.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-3xl border border-border-light bg-white/[0.03] p-6 hover:border-primary-accent/40 hover:bg-white/[0.05] transition-all duration-200"
+                  className="rounded-3xl border border-border-light bg-surface-soft p-6 hover:border-primary-accent/40 hover:bg-surface-muted transition-all duration-200"
                 >
                   {cardContent}
                 </a>
               ) : (
-                <div key={article.id} className="rounded-3xl border border-border-light bg-white/[0.03] p-6 hover:border-primary-accent/40 hover:bg-white/[0.05] transition-all duration-200">
+                <div key={article.id} className="rounded-3xl border border-border-light bg-surface-soft p-6 hover:border-primary-accent/40 hover:bg-surface-muted transition-all duration-200">
                   {cardContent}
                 </div>
               );
@@ -694,7 +699,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {personalData.contactCards.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-border-light bg-white/[0.04] p-4">
+                  <div key={item.label} className="rounded-2xl border border-border-light bg-surface-raised p-4">
                     <p className="text-xs uppercase tracking-wider text-primary-accent font-semibold">{item.label}</p>
                     <p className="mt-2 text-sm text-text-primary font-medium">{item.value}</p>
                   </div>
@@ -702,10 +707,10 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
               </div>
             </div>
 
-            <div className="rounded-3xl border border-border-light bg-bg-dark/40 p-6 space-y-5">
+            <div className="rounded-3xl border border-border-light bg-surface-soft p-6 space-y-5">
               <a
                 href={`mailto:${personalData.email}`}
-                className="w-full px-8 py-4 bg-gradient-to-r from-primary-accent to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-primary-accent/40 transition-all duration-200 hover:scale-[1.02] flex items-center justify-center gap-2"
+                className="w-full px-8 py-4 bg-gradient-to-r from-primary-accent to-button-gradient-to text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-primary-accent/40 transition-all duration-200 hover:scale-[1.02] flex items-center justify-center gap-2"
                 onMouseEnter={() => setAvatarMood("smile")}
                 onMouseLeave={() => setAvatarMood("neutral")}
                 onClick={() => setAvatarMood("talking", 900)}
@@ -715,7 +720,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
 
               <div className="space-y-3 text-sm text-text-secondary">
                 {personalData.email && (
-                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-border-light bg-white/[0.03] p-3">
+                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-border-light bg-surface-soft p-3">
                     <span>Email</span>
                     <a href={`mailto:${personalData.email}`} className="font-medium text-text-primary hover:text-primary-accent transition-colors break-all">
                       {personalData.email}
@@ -723,7 +728,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                   </div>
                 )}
                 {personalData.address && (
-                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-border-light bg-white/[0.03] p-3">
+                  <div className="flex items-center justify-between gap-4 rounded-2xl border border-border-light bg-surface-soft p-3">
                     <span>Location</span>
                     <span className="font-medium text-text-primary text-right">{personalData.address}</span>
                   </div>
@@ -739,7 +744,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                     onMouseEnter={() => setAvatarMood("smile")}
                     onMouseLeave={() => setAvatarMood("neutral")}
                     onClick={() => setAvatarMood("talking", 900)}
-                    className="flex-1 min-w-[150px] px-4 py-3 border-2 border-border-light text-text-primary rounded-xl font-semibold hover:bg-white/5 hover:border-primary-accent transition-all duration-200 flex items-center justify-center gap-2"
+                    className="flex-1 min-w-[150px] px-4 py-3 border-2 border-border-light text-text-primary rounded-xl font-semibold hover:bg-surface-muted hover:border-primary-accent transition-all duration-200 flex items-center justify-center gap-2"
                   >
                     <FaDownload /> {personalData.resumeCtaLabel}
                   </a>
@@ -751,7 +756,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                   onMouseEnter={() => setAvatarMood("smile")}
                   onMouseLeave={() => setAvatarMood("neutral")}
                   onClick={() => setAvatarMood("talking", 900)}
-                  className="p-3 border-2 border-border-light rounded-xl hover:border-primary-accent hover:bg-white/5 transition-all duration-200"
+                  className="p-3 border-2 border-border-light rounded-xl hover:border-primary-accent hover:bg-surface-muted transition-all duration-200"
                   aria-label="GitHub profile"
                 >
                   <FaGithub className="text-2xl" />
@@ -763,7 +768,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                   onMouseEnter={() => setAvatarMood("smile")}
                   onMouseLeave={() => setAvatarMood("neutral")}
                   onClick={() => setAvatarMood("talking", 900)}
-                  className="p-3 border-2 border-border-light rounded-xl hover:border-primary-accent hover:bg-white/5 transition-all duration-200"
+                  className="p-3 border-2 border-border-light rounded-xl hover:border-primary-accent hover:bg-surface-muted transition-all duration-200"
                   aria-label="LinkedIn profile"
                 >
                   <FaLinkedin className="text-2xl" />
@@ -775,7 +780,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                   onMouseEnter={() => setAvatarMood("smile")}
                   onMouseLeave={() => setAvatarMood("neutral")}
                   onClick={() => setAvatarMood("talking", 900)}
-                  className="p-3 border-2 border-border-light rounded-xl hover:border-primary-accent hover:bg-white/5 transition-all duration-200"
+                  className="p-3 border-2 border-border-light rounded-xl hover:border-primary-accent hover:bg-surface-muted transition-all duration-200"
                   aria-label="Twitter profile"
                 >
                   <FaTwitter className="text-2xl" />

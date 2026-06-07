@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   motion as baseMotion,
   useMotionValue,
   useSpring,
   useTransform,
-  useScroll,
   useReducedMotion,
 } from "framer-motion";
 
@@ -46,7 +45,61 @@ const safeAssetUrl = (value: unknown) => {
   return /^https?:\/\//i.test(trimmed) || trimmed.startsWith("/") ? trimmed : "";
 };
 
-const AVATAR_POSITION_KEY = "portfolio-avatar-position-v2";
+const AVATAR_POSITION_KEY = "portfolio-avatar-position-v5";
+const AVATAR_BOUNDS_PADDING = 14;
+
+type AvatarSize = "compact" | "medium" | "large";
+
+type ViewportPoint = { x: number; y: number };
+type SavedAvatarPoint = ViewportPoint & { size?: AvatarSize };
+
+const getAvatarSize = (): AvatarSize => {
+  if (typeof window === "undefined") return "large";
+  if (window.innerWidth < 640) return "compact";
+  if (window.innerWidth < 1024) return "medium";
+  return "large";
+};
+
+const getAvatarDimensions = (size: AvatarSize) => {
+  if (size === "compact") return { width: 116, height: 182 };
+  if (size === "medium") return { width: 142, height: 214 };
+  return { width: 184, height: 252 };
+};
+
+const clampPointToViewport = (point: ViewportPoint, size: AvatarSize): ViewportPoint => {
+  if (typeof window === "undefined") return point;
+  const { width, height } = getAvatarDimensions(size);
+  const maxX = Math.max(AVATAR_BOUNDS_PADDING, window.innerWidth - width - AVATAR_BOUNDS_PADDING);
+  const maxY = Math.max(AVATAR_BOUNDS_PADDING, window.innerHeight - height - AVATAR_BOUNDS_PADDING);
+  return {
+    x: clamp(point.x, AVATAR_BOUNDS_PADDING, maxX),
+    y: clamp(point.y, AVATAR_BOUNDS_PADDING, maxY),
+  };
+};
+
+const getDefaultAvatarPoint = (size: AvatarSize): ViewportPoint => {
+  if (typeof window === "undefined") return { x: 0, y: 0 };
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const { width, height } = getAvatarDimensions(size);
+
+  if (size === "compact") {
+    return clampPointToViewport({ x: vw - width - 12, y: vh - height - 18 }, size);
+  }
+
+  if (size === "medium") {
+    return clampPointToViewport({ x: vw - width - 22, y: vh - height - 28 }, size);
+  }
+
+  const pageRightGutter = Math.max(18, (vw - 1200) / 2 + 18);
+  return clampPointToViewport(
+    {
+      x: vw - pageRightGutter - width,
+      y: Math.max(128, Math.min(190, vh * 0.18)),
+    },
+    size
+  );
+};
 
 export type MouthExpression = "neutral" | "smile" | "surprised" | "sad" | "talking";
 type MoodDetail = { expression: MouthExpression; duration?: number };
@@ -451,23 +504,15 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
   const idleEyeX = useMotionValue(0);
   const idleEyeY = useMotionValue(0);
   const idleEyeTarget = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const dragX = useMotionValue(0);
-  const dragY = useMotionValue(0);
-  const [dragConstraints, setDragConstraints] = useState<{ left: number; right: number; top: number; bottom: number }>({
-    left: -400,
-    right: 12,
-    top: -400,
-    bottom: 12,
-  });
+  const avatarX = useMotionValue(0);
+  const avatarY = useMotionValue(0);
+  const [avatarSize, setAvatarSize] = useState<AvatarSize>("large");
+  const [hasMounted, setHasMounted] = useState(false);
+  const [dragConstraints, setDragConstraints] = useState({ left: 0, right: 0, top: 0, bottom: 0 });
   const isDraggingRef = useRef(false);
   const targetX = useRef(0);
   const targetY = useRef(0);
   const avatarRef = useRef<HTMLDivElement | null>(null);
-
-  const { scrollY } = useScroll();
-  const floatY = useTransform(scrollY, [0, 400], [0, 16]);
-  const floatScale = useTransform(scrollY, [0, 400], [1, 1.02]);
-  const combinedY = useTransform([floatY, dragY], ([a, b]) => Number(a) + Number(b));
 
   const pupilX = useSpring(mouseX, { stiffness: 120, damping: 16 });
   const pupilY = useSpring(mouseY, { stiffness: 120, damping: 16 });
@@ -510,17 +555,44 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
     return personalityBehavior.mouths || animation.idleMouths;
   }, [animation.idleMouths, personalityBehavior.mouths]);
 
+  const setAvatarPoint = useCallback(
+    (point: ViewportPoint, size = avatarSize) => {
+      const safePoint = clampPointToViewport(point, size);
+      avatarX.set(safePoint.x);
+      avatarY.set(safePoint.y);
+      return safePoint;
+    },
+    [avatarSize, avatarX, avatarY]
+  );
+
+  const keepAvatarInViewport = useCallback(() => {
+    setAvatarPoint({ x: avatarX.get(), y: avatarY.get() });
+  }, [avatarX, avatarY, setAvatarPoint]);
+
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(AVATAR_POSITION_KEY);
-      if (!saved) return;
-      const parsed = JSON.parse(saved) as { x?: unknown; y?: unknown };
-      if (typeof parsed.x === "number") dragX.set(parsed.x);
-      if (typeof parsed.y === "number") dragY.set(parsed.y);
-    } catch {
-      // Ignore corrupt saved positions and keep the default bottom-right placement.
-    }
-  }, [dragX, dragY]);
+    if (typeof window === "undefined") return;
+
+    const initializeAvatarPosition = () => {
+      const nextSize = getAvatarSize();
+      setAvatarSize(nextSize);
+
+      let nextPoint = getDefaultAvatarPoint(nextSize);
+      try {
+        const saved = window.localStorage.getItem(AVATAR_POSITION_KEY);
+        const parsed = saved ? (JSON.parse(saved) as SavedAvatarPoint) : null;
+        if (parsed?.size === nextSize && typeof parsed.x === "number" && typeof parsed.y === "number") {
+          nextPoint = { x: parsed.x, y: parsed.y };
+        }
+      } catch {
+        // Ignore corrupt saved positions and keep the default placement.
+      }
+
+      setAvatarPoint(nextPoint, nextSize);
+      setHasMounted(true);
+    };
+
+    initializeAvatarPosition();
+  }, [setAvatarPoint]);
 
   useEffect(() => {
     if (prefersReduced) return;
@@ -801,42 +873,50 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
 
     updateSpeechPlacement();
     window.addEventListener("resize", updateSpeechPlacement);
-    const unsubscribeX = dragX.on("change", updateSpeechPlacement);
-    const unsubscribeY = dragY.on("change", updateSpeechPlacement);
-    const unsubscribeScroll = scrollY.on("change", updateSpeechPlacement);
+    const unsubscribeX = avatarX.on("change", updateSpeechPlacement);
+    const unsubscribeY = avatarY.on("change", updateSpeechPlacement);
 
     return () => {
       window.removeEventListener("resize", updateSpeechPlacement);
       unsubscribeX();
       unsubscribeY();
-      unsubscribeScroll();
     };
-  }, [dragX, dragY, scrollY]);
+  }, [avatarX, avatarY]);
 
-  // Compute drag constraints based on viewport and avatar size
+  // Compute drag constraints from the current fixed left/top point. These are relative to the
+  // current Framer Motion x/y values, so using explicit viewport coordinates prevents top-sticking.
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const compute = () => {
-      const padding = 12;
-      const rect = avatarRef.current?.getBoundingClientRect();
-      const vw = window.innerWidth || 0;
-      const vh = window.innerHeight || 0;
-
-      if (!rect) {
-        setDragConstraints({ left: -400, right: 12, top: -400, bottom: 300 });
-        return;
-      }
-
+      const { width, height } = getAvatarDimensions(avatarSize);
       setDragConstraints({
-        left: padding - rect.left,
-        right: vw - padding - rect.right,
-        top: padding - rect.top,
-        bottom: vh - padding - rect.bottom,
+        left: AVATAR_BOUNDS_PADDING - avatarX.get(),
+        right: window.innerWidth - width - AVATAR_BOUNDS_PADDING - avatarX.get(),
+        top: AVATAR_BOUNDS_PADDING - avatarY.get(),
+        bottom: window.innerHeight - height - AVATAR_BOUNDS_PADDING - avatarY.get(),
       });
     };
+
+    const handleResize = () => {
+      const nextSize = getAvatarSize();
+      const sizeChanged = nextSize !== avatarSize;
+      setAvatarSize(nextSize);
+      const currentPoint = sizeChanged ? getDefaultAvatarPoint(nextSize) : { x: avatarX.get(), y: avatarY.get() };
+      setAvatarPoint(currentPoint, nextSize);
+      window.requestAnimationFrame(compute);
+    };
+
     compute();
-    window.addEventListener("resize", compute);
-    return () => window.removeEventListener("resize", compute);
-  }, []);
+    const unsubscribeX = avatarX.on("change", compute);
+    const unsubscribeY = avatarY.on("change", compute);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      unsubscribeX();
+      unsubscribeY();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [avatarSize, avatarX, avatarY, setAvatarPoint]);
 
   const triggerTalk = () => {
     const followDuration = 4200;
@@ -868,10 +948,10 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
     [mouth]
   );
 
-  const speechBubbleClassName = `absolute top-1 z-[60] w-60 max-w-[72vw] rounded-2xl border border-primary-accent/40 bg-bg-card/95 px-4 py-3 text-sm leading-snug text-text-primary shadow-2xl shadow-black/30 ring-1 ring-border-light backdrop-blur-2xl sm:w-64 lg:top-2 ${
+  const speechBubbleClassName = `absolute top-1 z-[60] w-52 max-w-[76vw] rounded-[1.35rem] border border-primary-accent/45 bg-bg-card/98 px-3.5 py-3 text-xs leading-snug text-text-primary shadow-2xl shadow-black/35 ring-1 ring-border-light backdrop-blur-2xl sm:w-60 sm:text-sm lg:top-2 lg:w-64 ${
     speechPlacement === "right"
-      ? "left-[calc(100%-0.15rem)] before:absolute before:left-[-0.45rem] before:top-9 before:h-4 before:w-4 before:rotate-45 before:border-b before:border-l before:border-primary-accent/40 before:bg-bg-card"
-      : "right-[calc(100%-0.15rem)] lg:right-[calc(100%-1.15rem)] before:absolute before:right-[-0.45rem] before:top-9 before:h-4 before:w-4 before:rotate-45 before:border-r before:border-t before:border-primary-accent/40 before:bg-bg-card"
+      ? "left-[calc(100%-0.25rem)] before:absolute before:left-[-0.45rem] before:top-9 before:h-4 before:w-4 before:rotate-45 before:border-b before:border-l before:border-primary-accent/45 before:bg-bg-card"
+      : "right-[calc(100%-0.25rem)] lg:right-[calc(100%-0.95rem)] before:absolute before:right-[-0.45rem] before:top-9 before:h-4 before:w-4 before:rotate-45 before:border-r before:border-t before:border-primary-accent/45 before:bg-bg-card"
   }`;
 
   // Listen for external mouth change requests (e.g., button hovers)
@@ -893,16 +973,15 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.35, y: 96, rotate: -12 }}
-      animate={{ opacity: visible ? 1 : 0, scale: 1, y: 0, rotate: 0 }}
-      transition={{ type: "spring", stiffness: 240, damping: 18, mass: 0.9, delay: 0.05 }}
+      initial={{ opacity: 0, scale: 0.92, rotate: -6 }}
+      animate={{ opacity: visible && hasMounted ? 1 : 0, scale: 1, rotate: 0 }}
+      transition={{ type: "spring", stiffness: 240, damping: 20, mass: 0.9, delay: 0.05 }}
       style={{
-        x: dragX,
-        y: combinedY,
-        scale: floatScale,
+        x: avatarX,
+        y: avatarY,
       }}
       ref={avatarRef}
-      className="fixed bottom-5 right-3 z-50 pointer-events-auto select-none sm:bottom-8 sm:right-8 lg:bottom-auto lg:top-28 lg:right-[max(1rem,calc((100vw-1200px)/2+0.75rem))]"
+      className="fixed left-0 top-0 z-50 pointer-events-auto select-none will-change-transform"
       aria-hidden
       drag={unlocked}
       dragMomentum={false}
@@ -917,14 +996,20 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
       onDragEnd={() => {
         setMouth("smile");
         isDraggingRef.current = false;
-        try {
-          window.localStorage.setItem(
-            AVATAR_POSITION_KEY,
-            JSON.stringify({ x: dragX.get(), y: dragY.get() })
-          );
-        } catch {
-          // Position persistence is optional; dragging still works if storage is unavailable.
-        }
+        window.requestAnimationFrame(() => {
+          keepAvatarInViewport();
+          try {
+            const safePoint = clampPointToViewport({ x: avatarX.get(), y: avatarY.get() }, avatarSize);
+            avatarX.set(safePoint.x);
+            avatarY.set(safePoint.y);
+            window.localStorage.setItem(
+              AVATAR_POSITION_KEY,
+              JSON.stringify({ ...safePoint, size: avatarSize })
+            );
+          } catch {
+            // Position persistence is optional; dragging still works if storage is unavailable.
+          }
+        });
       }}
     >
       {showDragPrompt && unlocked && (
@@ -974,11 +1059,11 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
           <img
             src={cmsAvatarUrl}
             alt={cmsAvatarTitle}
-            className="w-36 h-auto sm:w-40 max-h-[220px] object-contain"
+            className="h-auto w-24 max-h-[170px] object-contain sm:w-32 sm:max-h-[205px] lg:w-40 lg:max-h-[238px]"
             draggable={false}
           />
         ) : (
-        <svg width="180" height="220" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" className="w-36 h-auto sm:w-40">
+        <svg width="180" height="220" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" className="h-auto w-24 sm:w-32 lg:w-40">
           <title>{cmsAvatarTitle}</title>
           <ellipse cx="200" cy="430" rx="82" ry="18" fill={colors.accent} opacity="0.18" />
           <g id="body-group">

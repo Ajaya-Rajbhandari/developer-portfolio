@@ -11,8 +11,7 @@ export const metadata: Metadata = {
     "Full-stack developer portfolio for Ajaya Rajbhandari, focused on responsive web applications, JavaScript, TypeScript, React, Next.js, and practical product development.",
 };
 
-import Navbar from "@/components/navbar/navbar";
-import Footer from "@/components/footer/footer";
+import SiteChrome from "@/components/layout/site-chrome";
 import { fetchPersonalData } from "@/lib/data";
 
 export default async function RootLayout({
@@ -28,12 +27,17 @@ export default async function RootLayout({
         <Script id="theme-init" strategy="beforeInteractive">
           {`try{var t=localStorage.getItem('portfolio-theme');var m=t==='light'?'light':'dark';document.documentElement.dataset.theme=m;document.documentElement.style.colorScheme=m;}catch(e){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark';}`}
         </Script>
-        <a className="skip-to-content" href="#main-content">
-          Skip to main content
-        </a>
-        <Navbar labels={personalData.navLabels} />
-        <main id="main-content" style={{ position: 'relative' }}>{children}</main>
-        <Footer text={personalData.footerText} ownerName={personalData.footerOwnerName} ownerLink={personalData.footerLink} />
+        <Script id="scroll-restoration" strategy="beforeInteractive">
+          {`try{if('scrollRestoration' in history){history.scrollRestoration='manual';}}catch(e){}`}
+        </Script>
+        <SiteChrome
+          navLabels={personalData.navLabels}
+          footerText={personalData.footerText}
+          footerOwnerName={personalData.footerOwnerName}
+          footerLink={personalData.footerLink}
+        >
+          {children}
+        </SiteChrome>
       </body>
     </html>
   );

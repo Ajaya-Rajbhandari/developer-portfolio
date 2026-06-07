@@ -1,4 +1,4 @@
-import { getProjects, getArticles, getSkills, getExperiences, getPersonalData } from './sanity.queries'
+import { getProjects, getArticles, getArticleBySlug, getSkills, getExperiences, getPersonalData } from './sanity.queries'
 import { urlFor } from './sanity.image'
 import { projectsData } from '@/utils/data/projects-data'
 import { articlesData } from '@/utils/data/articles-data'
@@ -38,6 +38,9 @@ type SanityArticle = {
   url?: string
   publishedAt?: string
   featured?: boolean
+  coverImage?: string
+  hasBody?: boolean
+  body?: unknown[]
 }
 
 type SanitySkill = {
@@ -238,6 +241,8 @@ export async function fetchArticles() {
           url: article.url || '',
           publishedAt: article.publishedAt || '',
           featured: !!article.featured,
+          coverImage: article.coverImage || '',
+          hasBody: !!article.hasBody,
         }))
       }
     } catch (error) {
@@ -246,6 +251,51 @@ export async function fetchArticles() {
   }
 
   return articlesData
+}
+
+// Fetch a single article (with full body) by its slug, for the /writing/[slug] page.
+export async function fetchArticleBySlug(slug: string) {
+  if (!slug) return null
+
+  if (isSanityConfigured()) {
+    try {
+      const article = (await getArticleBySlug(slug)) as SanityArticle | null
+      if (article) {
+        return {
+          id: article._id || slug,
+          title: article.title || 'Untitled Article',
+          slug: article.slug?.current || slug,
+          summary: article.summary || '',
+          tags: Array.isArray(article.tags) ? article.tags : [],
+          status: article.status || 'planned',
+          url: article.url || '',
+          publishedAt: article.publishedAt || '',
+          featured: !!article.featured,
+          coverImage: article.coverImage || '',
+          body: Array.isArray(article.body) ? article.body : [],
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching article by slug from Sanity:', error)
+    }
+  }
+
+  // Fallback: match against local notes (no rich body available)
+  const local = articlesData.find((a) => a.id === slug)
+  if (!local) return null
+  return {
+    id: local.id,
+    title: local.title,
+    slug: local.id,
+    summary: local.summary,
+    tags: local.tags,
+    status: local.status,
+    url: local.url,
+    publishedAt: '',
+    featured: !!local.featured,
+    coverImage: '',
+    body: [] as unknown[],
+  }
 }
 
 // Fetch skills - use Sanity if configured, otherwise use local data

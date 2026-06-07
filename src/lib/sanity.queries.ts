@@ -36,8 +36,35 @@ export async function getArticles() {
       url,
       publishedAt,
       featured,
+      "coverImage": coverImage.asset->url,
+      "hasBody": count(body) > 0,
     }
   `
+  )
+}
+
+export async function getArticleBySlug(slug: string) {
+  return client.fetch(
+    groq`*[_type == "article" && slug.current == $slug][0] {
+      _id,
+      title,
+      slug,
+      summary,
+      tags,
+      status,
+      url,
+      publishedAt,
+      featured,
+      "coverImage": coverImage.asset->url,
+      body[]{
+        ...,
+        _type == "image" => {
+          ...,
+          "url": asset->url,
+        }
+      },
+    }`,
+    { slug }
   )
 }
 

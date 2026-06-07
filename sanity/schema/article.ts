@@ -29,6 +29,33 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'coverImage',
+      title: 'Cover Image',
+      type: 'image',
+      options: { hotspot: true },
+      description: 'Optional banner shown on the article page and listing card.',
+    }),
+    defineField({
+      name: 'body',
+      title: 'Body',
+      type: 'array',
+      description: 'The full article content shown on its own page (/writing/your-slug).',
+      of: [
+        { type: 'block' },
+        {
+          type: 'image',
+          options: { hotspot: true },
+          fields: [
+            {
+              name: 'alt',
+              title: 'Alt text',
+              type: 'string',
+            },
+          ],
+        },
+      ],
+    }),
+    defineField({
       name: 'tags',
       title: 'Tags',
       type: 'array',
@@ -54,9 +81,9 @@ export default defineType({
     }),
     defineField({
       name: 'url',
-      title: 'Article URL',
+      title: 'External URL',
       type: 'url',
-      description: 'Optional external or internal URL for published articles.',
+      description: 'Optional. If set (and there is no Body content), the card links to this external link instead of an on-site page.',
     }),
     defineField({
       name: 'publishedAt',

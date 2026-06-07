@@ -1,13 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import {
+  animate,
   motion as baseMotion,
   useMotionValue,
   useSpring,
   useTransform,
   useReducedMotion,
 } from "framer-motion";
+
+// Lottie player loaded client-side only (dotlottie-web uses canvas/WASM).
+const DotLottieReact = dynamic(
+  () => import("@lottiefiles/dotlottie-react").then((m) => m.DotLottieReact),
+  { ssr: false }
+);
+// Spawn animation file (dotLottie .lottie or Lottie .json). If missing, the avatar
+// automatically falls back to the built-in CSS puff.
+const LOTTIE_SRC = {
+  spawn: "/lottie/spawn.lottie",
+};
 
 type LocalMotionProps = {
   initial?: Record<string, unknown>;
@@ -21,12 +34,14 @@ type LocalMotionProps = {
 type MotionDivProps = React.ComponentProps<typeof baseMotion.div> & LocalMotionProps;
 type MotionGroupProps = React.ComponentProps<typeof baseMotion.g> & LocalMotionProps;
 type MotionCircleProps = React.ComponentProps<typeof baseMotion.circle> & LocalMotionProps;
+type MotionSpanProps = React.ComponentProps<typeof baseMotion.span> & LocalMotionProps;
 
 const motion = {
   ...baseMotion,
   div: baseMotion.div as React.ComponentType<MotionDivProps>,
   g: baseMotion.g as React.ComponentType<MotionGroupProps>,
   circle: baseMotion.circle as React.ComponentType<MotionCircleProps>,
+  span: baseMotion.span as React.ComponentType<MotionSpanProps>,
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -62,21 +77,42 @@ const getAvatarDimensions = (size: AvatarSize) => {
   return { width: 160, height: 224 };
 };
 
+// On mobile, window.innerHeight is the (taller) layout viewport that extends behind
+// the browser UI; visualViewport.height is the actually-visible area, so the avatar
+// docks to the visible bottom instead of disappearing below the toolbar.
+const getViewportHeight = (): number => {
+  if (typeof window === "undefined") return 0;
+  return window.visualViewport?.height ?? window.innerHeight;
+};
+
 const clampPointToViewport = (point: ViewportPoint, size: AvatarSize): ViewportPoint => {
   if (typeof window === "undefined") return point;
   const { width, height } = getAvatarDimensions(size);
   const maxX = Math.max(AVATAR_BOUNDS_PADDING, window.innerWidth - width - AVATAR_BOUNDS_PADDING);
-  const maxY = Math.max(AVATAR_BOUNDS_PADDING, window.innerHeight - height - AVATAR_BOUNDS_PADDING);
+  const maxY = Math.max(AVATAR_BOUNDS_PADDING, getViewportHeight() - height - AVATAR_BOUNDS_PADDING);
   return {
     x: clamp(point.x, AVATAR_BOUNDS_PADDING, maxX),
     y: clamp(point.y, AVATAR_BOUNDS_PADDING, maxY),
   };
 };
 
+// Dock the avatar to the bottom of whichever side edge its center is closest to,
+// so it always "sits" in the bottom-left or bottom-right corner.
+const snapPointToEdge = (point: ViewportPoint, size: AvatarSize): ViewportPoint => {
+  if (typeof window === "undefined") return clampPointToViewport(point, size);
+  const { width, height } = getAvatarDimensions(size);
+  const clamped = clampPointToViewport(point, size);
+  const maxX = Math.max(AVATAR_BOUNDS_PADDING, window.innerWidth - width - AVATAR_BOUNDS_PADDING);
+  const maxY = Math.max(AVATAR_BOUNDS_PADDING, getViewportHeight() - height - AVATAR_BOUNDS_PADDING);
+  const center = clamped.x + width / 2;
+  const snappedX = center < window.innerWidth / 2 ? AVATAR_BOUNDS_PADDING : maxX;
+  return { x: snappedX, y: maxY };
+};
+
 const getDefaultAvatarPoint = (size: AvatarSize): ViewportPoint => {
   if (typeof window === "undefined") return { x: 0, y: 0 };
   const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  const vh = getViewportHeight();
   const { width, height } = getAvatarDimensions(size);
 
   if (size === "compact") {
@@ -190,7 +226,6 @@ type CharacterPreset = {
   accessory: "laptop" | "spark" | "none";
   bodyShape: "hoodie" | "jacket" | "tee" | "minimal";
   animation: CharacterAnimation;
-  messages: string[];
 };
 
 const CHARACTER_PRESETS: Record<CharacterVariant, CharacterPreset> = {
@@ -223,18 +258,6 @@ const CHARACTER_PRESETS: Record<CharacterVariant, CharacterPreset> = {
       actionEvery: [5600, 8200],
       popupItems: ["bug", "check", "idea"],
     },
-    messages: [
-      "This portfolio is built to load fast, not just look expensive.",
-      "React, TypeScript, Sanity — yes, the stack has taste.",
-      "I’m checking the project cards for actual outcomes. Wild concept.",
-      "Clean UI, clean code, fewer mystery bugs. Revolutionary.",
-      "The case studies explain the problem, role, stack, and result.",
-      "Responsive layout? Already handled, because phones exist.",
-      "This site ships credibility before it ships confetti.",
-      "I refactored the awkward parts so visitors do not have to suffer.",
-      "Performance matters. Shockingly, people dislike waiting.",
-      "Hire the human behind this before another meeting creates a spreadsheet.",
-    ],
   },
   creator: {
     label: "Creator character",
@@ -265,18 +288,6 @@ const CHARACTER_PRESETS: Record<CharacterVariant, CharacterPreset> = {
       actionEvery: [3600, 5600],
       popupItems: ["chat", "idea", "rocket"],
     },
-    messages: [
-      "The visuals are here to guide attention, not scream into the void.",
-      "This portfolio tells the story behind the work. Fancy, I know.",
-      "Micro-interactions add personality without becoming a circus.",
-      "Each section has a job: prove value, then make contact easy.",
-      "The design says polished; the content says useful.",
-      "A little motion helps visitors notice what matters.",
-      "Yes, the avatar talks. No, it is not replacing the developer. Yet.",
-      "The featured work should make recruiters stop doom-scrolling.",
-      "Good visuals are strategy wearing nicer shoes.",
-      "Let’s make the portfolio memorable without adding twelve carousels.",
-    ],
   },
   minimal: {
     label: "Minimal professional character",
@@ -307,18 +318,6 @@ const CHARACTER_PRESETS: Record<CharacterVariant, CharacterPreset> = {
       actionEvery: [7200, 10400],
       popupItems: ["check"],
     },
-    messages: [
-      "Less noise, more proof. Radical portfolio strategy.",
-      "The layout keeps attention on the work, where it belongs.",
-      "Whitespace is doing actual labor here.",
-      "No clutter, no gimmicks, no 47 badges fighting for attention.",
-      "The copy is short because visitors have lives.",
-      "Clear sections beat decorative chaos every time.",
-      "The portfolio stays calm so the projects can speak.",
-      "Minimal does not mean empty. It means edited.",
-      "If a detail does not help the story, it leaves. Harsh but fair.",
-      "Professional, readable, and thankfully not a template explosion.",
-    ],
   },
   explorer: {
     label: "Explorer character",
@@ -349,18 +348,6 @@ const CHARACTER_PRESETS: Record<CharacterVariant, CharacterPreset> = {
       actionEvery: [2600, 4600],
       popupItems: ["rocket", "idea", "chat"],
     },
-    messages: [
-      "Scroll around — the good stuff is not hiding behind a PDF from 2018.",
-      "The project stories show decisions, tradeoffs, and outcomes.",
-      "There is more here than a hero headline doing cardio.",
-      "Explore the sections; I promise they are not just decorative rectangles.",
-      "This portfolio has momentum, which is useful because attention spans do not.",
-      "The work is organized so you can judge skill quickly.",
-      "Every section should answer: why trust this developer?",
-      "Adventure mode: portfolio edition. Extremely dangerous, obviously.",
-      "The CTA is clear because scavenger hunts are not UX.",
-      "If you find a better section, click it. I can handle the rejection.",
-    ],
   },
   techLead: {
     label: "Tech lead character",
@@ -391,18 +378,6 @@ const CHARACTER_PRESETS: Record<CharacterVariant, CharacterPreset> = {
       actionEvery: [6200, 9000],
       popupItems: ["check", "idea"],
     },
-    messages: [
-      "The portfolio is structured like a product: goal, proof, conversion.",
-      "Good architecture saves future-you from sending apology messages.",
-      "The projects highlight role, stack, constraints, and outcomes.",
-      "Strong systems, smooth delivery, fewer dramatic Slack threads.",
-      "This site balances personality with credibility.",
-      "The CTA is focused because ambiguity is not a growth strategy.",
-      "Maintainable code matters after the launch tweet stops getting likes.",
-      "The case studies are written for humans and hiring teams. Efficient.",
-      "Clear decisions beat shiny confusion every time.",
-      "This portfolio says senior without needing a thirty-line buzzword salad.",
-    ],
   },
   aiBuilder: {
     label: "AI builder character",
@@ -433,18 +408,6 @@ const CHARACTER_PRESETS: Record<CharacterVariant, CharacterPreset> = {
       actionEvery: [3200, 5600],
       popupItems: ["neural", "idea", "spark"],
     },
-    messages: [
-      "I scanned the portfolio. Signal found: practical builder energy.",
-      "AI features are useful when they solve problems, not when they cosplay as magic.",
-      "This site connects strategy, code, and outcome. Suspiciously sensible.",
-      "Automation belongs where it saves time, not where it annoys users faster.",
-      "The work shows modern tooling without worshipping the tooling.",
-      "Prompt accepted: make the portfolio clearer and less boring.",
-      "The strongest projects explain impact, not just dependencies installed.",
-      "I detect polish, performance, and a healthy dislike of vague CTAs.",
-      "Tiny interaction, big memory hook. Humans are weird; use that.",
-      "This avatar is optional. Good work, unfortunately, is not.",
-    ],
   },
 };
 
@@ -469,6 +432,35 @@ type ActiveCharacterAvatar = {
   avatarImage?: string;
 } | null;
 
+// Short, punchy tokens that float up above the head and fade — kept brief so they read mid-flight.
+const FLOATING_PHRASES: Record<CharacterVariant, string[]> = {
+  developer: ["Clean code ✨", "Fast ⚡", "Fewer bugs 🐞", "Ship it 🚀", "Typed & tidy", "Performance 📈", "Refactored 🧹", "React + TS", "Less waiting ⏱️", "Hire the human 👋"],
+  creator: ["Storytelling ✨", "Polished 🎨", "On brand", "Memorable", "Motion 🌀", "Personality 💫", "Crafted", "Stop scrolling 🛑", "Useful + pretty", "Make contact easy"],
+  minimal: ["Less noise", "More proof", "Edited ✂️", "Whitespace 🤍", "Calm", "No clutter", "Readable", "Focused", "Clean lines", "Professional"],
+  explorer: ["Explore 🧭", "Outcomes 🎯", "Momentum 🚀", "Real stories", "Dive in", "Adventure ⛰️", "Trust built", "Keep clicking", "Discover", "No old PDFs 📄"],
+  techLead: ["Architecture 🏗️", "Goal → proof", "Maintainable", "Senior 🧠", "Clear decisions", "Scales 📊", "Smooth delivery", "Less drama", "Product-minded", "Trust 🤝"],
+  aiBuilder: ["Signal found 📡", "Practical AI 🤖", "Solves problems", "Automation ✦", "Modern tooling", "Curious 🔍", "Impact > deps", "Prompt accepted", "Polish ✨", "Optional, I know"],
+};
+
+// Classic cartoon "dizzy" stars that orbit the head on a tilted 3D ring.
+const DIZZY_STARS = Array.from({ length: 5 }, (_, i) => ({
+  angle: (i / 5) * 360, // even spacing around the ring
+  size: 13 + (i % 3) * 5, // 13–23px for a bit of variety
+}));
+const DIZZY_TILT = 64; // orbit-plane tilt (deg) → the 3D halo look
+const DIZZY_RADIUS = 28; // orbit radius (px)
+
+// Spawn "poof": soft dust/cloud puffs that expand outward and dissipate as the avatar materialises.
+const SPAWN_PUFFS = Array.from({ length: 16 }, (_, i) => {
+  const angle = (i / 16) * Math.PI * 2;
+  const ring = i % 2; // alternate a near and a far ring for a fuller cloud
+  return {
+    x: Math.cos(angle) * (26 + ring * 24),
+    y: Math.sin(angle) * (22 + ring * 18) - 6, // bias slightly upward
+    size: 16 + ((i * 7) % 20), // 16–34px
+    delay: (i % 5) * 0.03,
+  };
+});
 type FloatingAvatarProps = {
   avatar?: ActiveCharacterAvatar;
 };
@@ -488,7 +480,6 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
   const blinkTimer = useRef<NodeJS.Timeout | null>(null);
   const eyeDriftTimer = useRef<NodeJS.Timeout | null>(null);
   const promptTimer = useRef<NodeJS.Timeout | null>(null);
-  const typewriterTimer = useRef<NodeJS.Timeout | null>(null);
   const cursorFollowTimer = useRef<NodeJS.Timeout | null>(null);
   const cursorFollowUntil = useRef(0);
 
@@ -517,13 +508,18 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
   const eyeY = useTransform([pupilY, idleEyeY], ([a, b]) => Number(a) + Number(b));
   const headTilt = useTransform(mouseX, [-10, 10], [5, -5]);
   const [isUserIdle, setIsUserIdle] = useState(false);
-  const [unlocked] = useState(true);
-  const [showDragPrompt, setShowDragPrompt] = useState(false);
-  const [currentPromptMessage, setCurrentPromptMessage] = useState("Preparing the portfolio pitch...");
-  const [typedPromptMessage, setTypedPromptMessage] = useState("");
-  const [isTypingPrompt, setIsTypingPrompt] = useState(false);
   const [popupItem, setPopupItem] = useState<PopupItem | null>(null);
-  const [speechPlacement, setSpeechPlacement] = useState<"left" | "right">("left");
+  const [floaters, setFloaters] = useState<{ id: number; text: string }[]>([]);
+  const floaterIdRef = useRef(0);
+  const lastFloatRef = useRef<string>("");
+  const [spawning, setSpawning] = useState(true);
+  const [dizzy, setDizzy] = useState(false);
+  const dizzyRef = useRef(false);
+  // Fall back to the CSS puff if the spawn Lottie can't load.
+  const [spawnFxFailed, setSpawnFxFailed] = useState(false);
+  const hoverCountRef = useRef(0);
+  const hoverResetRef = useRef<NodeJS.Timeout | null>(null);
+  const dizzyTimerRef = useRef<NodeJS.Timeout | null>(null);
   const popupTimer = useRef<NodeJS.Timeout | null>(null);
   const popupHideTimer = useRef<NodeJS.Timeout | null>(null);
   const renderMode = avatar?.renderMode === "staticAsset" ? "staticAsset" : "animatedRig";
@@ -532,20 +528,19 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
   const cmsAvatarTitle = textOrFallback(avatar?.title, "Floating character", 60);
   const customPromptMessage = typeof avatar?.message === "string" ? avatar.message.trim().slice(0, 80) : "";
   const characterVariant = getCharacterVariant(avatar?.characterVariant);
+  // The displayed character rotates through the available presets over the day (see effect below).
+  const [activeVariant, setActiveVariant] = useState<CharacterVariant>(characterVariant);
   const personality = avatar?.personality || "friendly";
   const personalityBehavior = PERSONALITY_BEHAVIOR[personality] || PERSONALITY_BEHAVIOR.friendly;
-  const preset = CHARACTER_PRESETS[characterVariant];
+  const preset = CHARACTER_PRESETS[activeVariant];
   const colors = preset.colors;
   const animation = preset.animation;
 
-  const messagePool = useMemo(() => {
-    return customPromptMessage ? [customPromptMessage, ...preset.messages] : preset.messages;
-  }, [customPromptMessage, preset.messages]);
-
-  const introMessage = useMemo(() => {
-    const characterLabel = preset.label.replace(" character", "");
-    return `Hi, I’m the ${personalityBehavior.label.toLowerCase()} ${characterLabel}. I’ll point out the portfolio bits, with only a medically safe amount of sarcasm.`;
-  }, [personalityBehavior.label, preset.label]);
+  const floatingPool = useMemo(() => {
+    const base = FLOATING_PHRASES[activeVariant] || FLOATING_PHRASES.developer;
+    // Mix in a short CMS message as an occasional token, only if brief enough to read mid-flight.
+    return customPromptMessage && customPromptMessage.length <= 28 ? [customPromptMessage, ...base] : base;
+  }, [activeVariant, customPromptMessage]);
 
   const idleMouths = useMemo<MouthExpression[]>(() => {
     return personalityBehavior.mouths || animation.idleMouths;
@@ -579,7 +574,8 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
         // Ignore corrupt saved positions and keep the default placement.
       }
 
-      setAvatarPoint(nextPoint, nextSize);
+      // Always dock to a bottom corner, whether using the saved spot or the default.
+      setAvatarPoint(snapPointToEdge(nextPoint, nextSize), nextSize);
       setHasMounted(true);
     };
 
@@ -655,7 +651,6 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
       if (idleTimeout.current) clearTimeout(idleTimeout.current);
       if (blinkTimer.current) clearTimeout(blinkTimer.current);
       if (promptTimer.current) clearTimeout(promptTimer.current);
-      if (typewriterTimer.current) clearTimeout(typewriterTimer.current);
     };
   }, [mouseX, mouseY, prefersReduced]);
 
@@ -762,75 +757,119 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
     };
   }, [idleEyeX, idleEyeY, isUserIdle, prefersReduced]);
 
-  // Speech bubble: introduces the selected character on the first screen, then rotates through the CMS message + built-in portfolio lines.
+  // Floating words: one short token at a time rises from the centre of the head and fades.
   useEffect(() => {
     if (prefersReduced) return;
+    let stopped = false;
 
-    const finishTalking = () => {
-      setIsTypingPrompt(false);
-      setMouth("smile");
+    const emit = () => {
+      if (stopped) return;
+      // Stay silent while dizzy — no words during the easter egg.
+      if (!dizzyRef.current) {
+        // Pick a token, avoiding an immediate repeat so it doesn't say the same thing twice in a row.
+        let text = floatingPool[Math.floor(Math.random() * floatingPool.length)] || "✨";
+        for (let guard = 0; floatingPool.length > 1 && text === lastFloatRef.current && guard < 6; guard += 1) {
+          text = floatingPool[Math.floor(Math.random() * floatingPool.length)] || text;
+        }
+        lastFloatRef.current = text;
+
+        const id = (floaterIdRef.current += 1);
+        setFloaters((prev) => [...prev.slice(-1), { id, text }]);
+
+        // React to the thought.
+        setMouth("talking");
+        idleEyeX.set(-2);
+        idleEyeY.set(-3);
+        if (talkTimer.current) clearTimeout(talkTimer.current);
+        talkTimer.current = setTimeout(() => setMouth("smile"), 650);
+
+        // Remove once it has finished rising and fading.
+        setTimeout(() => setFloaters((prev) => prev.filter((f) => f.id !== id)), 2800);
+      }
+
+      // Calmer cadence: a new word every ~3.5–6s, so each one is readable on its own.
+      const next = 3500 + Math.random() * 2500;
+      promptTimer.current = setTimeout(emit, next);
+    };
+
+    promptTimer.current = setTimeout(emit, 1000);
+    return () => {
+      stopped = true;
+      if (promptTimer.current) clearTimeout(promptTimer.current);
+    };
+  }, [floatingPool, idleEyeX, idleEyeY, prefersReduced]);
+
+  // Auto-rotate the avatar through the available built-in characters across the day,
+  // so it isn't always the same one — a random one each visit, then switching every few hours.
+  useEffect(() => {
+    if (prefersReduced || !shouldUseAnimatedRig || cmsAvatarUrl) return;
+    const variants = Object.keys(CHARACTER_PRESETS) as CharacterVariant[];
+    const SLOT_MS = 4 * 60 * 60 * 1000; // 6 characters → a full rotation across ~24h
+    const pickDifferent = (current: CharacterVariant) => {
+      const others = variants.filter((v) => v !== current);
+      return others[Math.floor(Math.random() * others.length)] || current;
+    };
+    // Start each visit on a random character, then keep switching through the day.
+    setActiveVariant((current) => pickDifferent(current));
+    const interval = setInterval(() => setActiveVariant((current) => pickDifferent(current)), SLOT_MS);
+    return () => clearInterval(interval);
+  }, [shouldUseAnimatedRig, cmsAvatarUrl, prefersReduced]);
+
+  // Spawn "poof": clear the entrance burst once it has played.
+  useEffect(() => {
+    if (prefersReduced) return;
+    const t = setTimeout(() => setSpawning(false), 2000);
+    return () => clearTimeout(t);
+  }, [prefersReduced]);
+
+  // Dizzy easter egg: spin the pupils in a fast circle while dizzy, then settle.
+  useEffect(() => {
+    dizzyRef.current = dizzy;
+    if (!dizzy) return;
+    setFloaters([]); // clear any floating words for the duration
+    setMouth("surprised");
+    let raf = 0;
+    let start: number | null = null;
+    const tick = (ts: number) => {
+      if (start === null) start = ts;
+      const t = (ts - start) / 1000;
+      idleEyeX.set(Math.cos(t * 13) * 7);
+      idleEyeY.set(Math.sin(t * 13) * 7);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
       idleEyeX.set(0);
       idleEyeY.set(0);
-      if (talkTimer.current) clearTimeout(talkTimer.current);
-      talkTimer.current = setTimeout(() => setMouth("neutral"), 900);
+      setMouth("neutral");
     };
+  }, [dizzy, idleEyeX, idleEyeY]);
 
-    const speak = (message: string) => {
-      if (typewriterTimer.current) clearTimeout(typewriterTimer.current);
-      if (talkTimer.current) clearTimeout(talkTimer.current);
+  // Count rapid hovers; after the 3rd in quick succession, make the avatar dizzy for a few seconds.
+  const handleAvatarHover = useCallback(() => {
+    if (dizzy) return;
+    hoverCountRef.current += 1;
+    if (hoverResetRef.current) clearTimeout(hoverResetRef.current);
+    hoverResetRef.current = setTimeout(() => {
+      hoverCountRef.current = 0;
+    }, 2500);
+    if (hoverCountRef.current >= 3) {
+      hoverCountRef.current = 0;
+      setDizzy(true);
+      if (dizzyTimerRef.current) clearTimeout(dizzyTimerRef.current);
+      dizzyTimerRef.current = setTimeout(() => setDizzy(false), 3200);
+    }
+  }, [dizzy]);
 
-      setCurrentPromptMessage(message);
-      setTypedPromptMessage("");
-      setShowDragPrompt(true);
-      setIsTypingPrompt(true);
-
-      // Make the character visibly "say" the line instead of the text feeling detached.
-      setMouth("talking");
-      idleEyeX.set(-3);
-      idleEyeY.set(-4);
-
-      const chars = Array.from(message);
-      const typeSpeed = personality === "playful" ? 18 : personality === "calm" ? 36 : personality === "professional" ? 28 : 24;
-      let index = 0;
-
-      const typeNext = () => {
-        index += 1;
-        setTypedPromptMessage(chars.slice(0, index).join(""));
-
-        // Keep the mouth moving while the line types, with tiny pauses that feel like speech.
-        setMouth(index % 5 === 0 ? "smile" : "talking");
-
-        if (index < chars.length) {
-          typewriterTimer.current = setTimeout(typeNext, chars[index - 1] === "," || chars[index - 1] === "." ? typeSpeed * 5 : typeSpeed);
-          return;
-        }
-
-        finishTalking();
-      };
-
-      typewriterTimer.current = setTimeout(typeNext, 120);
-    };
-
-    const pickMessage = () => {
-      const pool = messagePool.length ? messagePool : [introMessage];
-      const next = pool[Math.floor(Math.random() * pool.length)] || introMessage;
-      speak(next);
-
-      const [minDelay, maxDelay] = personalityBehavior.messageEvery;
-      promptTimer.current = setTimeout(pickMessage, minDelay + Math.random() * (maxDelay - minDelay));
-    };
-
-    promptTimer.current = setTimeout(() => {
-      speak(introMessage);
-      const [minDelay, maxDelay] = personalityBehavior.messageEvery;
-      promptTimer.current = setTimeout(pickMessage, Math.max(5200, minDelay * 0.7) + Math.random() * Math.min(2400, maxDelay - minDelay));
-    }, 320);
-
-    return () => {
-      if (promptTimer.current) clearTimeout(promptTimer.current);
-      if (typewriterTimer.current) clearTimeout(typewriterTimer.current);
-    };
-  }, [idleEyeX, idleEyeY, introMessage, messagePool, personality, personalityBehavior.messageEvery, prefersReduced]);
+  // Fall back to the matching CSS effect if that Lottie file can't be loaded (e.g. not added yet).
+  const onLottieError = useCallback(
+    (onFail: () => void) =>
+      (dotLottie: { addEventListener: (event: "loadError", cb: () => void) => void } | null) => {
+        dotLottie?.addEventListener("loadError", onFail);
+      },
+    []
+  );
 
   // Character item popups: small temporary item appears every few seconds, based on the selected persona.
   useEffect(() => {
@@ -854,27 +893,6 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
     };
   }, [animation.actionEvery, animation.popupItems, personalityBehavior.actionMultiplier, prefersReduced]);
 
-  // Keep the speech bubble on the side with available viewport space.
-  useEffect(() => {
-    const updateSpeechPlacement = () => {
-      const rect = avatarRef.current?.getBoundingClientRect();
-      if (!rect || typeof window === "undefined") return;
-      const avatarCenter = rect.left + rect.width / 2;
-      setSpeechPlacement(avatarCenter < window.innerWidth * 0.48 ? "right" : "left");
-    };
-
-    updateSpeechPlacement();
-    window.addEventListener("resize", updateSpeechPlacement);
-    const unsubscribeX = avatarX.on("change", updateSpeechPlacement);
-    const unsubscribeY = avatarY.on("change", updateSpeechPlacement);
-
-    return () => {
-      window.removeEventListener("resize", updateSpeechPlacement);
-      unsubscribeX();
-      unsubscribeY();
-    };
-  }, [avatarX, avatarY]);
-
   // Keep the avatar responsive and clamped using absolute viewport coordinates only.
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -884,36 +902,28 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
       const sizeChanged = nextSize !== avatarSize;
       setAvatarSize(nextSize);
       const currentPoint = sizeChanged ? getDefaultAvatarPoint(nextSize) : { x: avatarX.get(), y: avatarY.get() };
-      setAvatarPoint(currentPoint, nextSize);
+      // Keep the avatar docked to its nearest edge as the viewport resizes.
+      setAvatarPoint(snapPointToEdge(currentPoint, nextSize), nextSize);
     };
 
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", handleResize);
+    // Re-dock when the mobile visible viewport changes (toolbar show/hide).
+    window.visualViewport?.addEventListener("resize", handleResize);
+    window.visualViewport?.addEventListener("scroll", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("orientationchange", handleResize);
+      window.visualViewport?.removeEventListener("resize", handleResize);
+      window.visualViewport?.removeEventListener("scroll", handleResize);
     };
   }, [avatarSize, avatarX, avatarY, setAvatarPoint]);
-
-  const saveAvatarPoint = useCallback(
-    (point: ViewportPoint, size = avatarSize) => {
-      const safePoint = setAvatarPoint(point, size);
-      try {
-        window.localStorage.setItem(AVATAR_POSITION_KEY, JSON.stringify({ ...safePoint, size }));
-      } catch {
-        // Position persistence is optional; dragging still works if storage is unavailable.
-      }
-      return safePoint;
-    },
-    [avatarSize, setAvatarPoint]
-  );
 
   const handleAvatarPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     if (typeof window === "undefined") return;
 
     event.preventDefault();
-    setShowDragPrompt(false);
     setMouth("smile");
     setIsUserIdle(false);
     isDraggingRef.current = true;
@@ -938,13 +948,23 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
       upEvent.preventDefault();
       isDraggingRef.current = false;
       setMouth("smile");
-      saveAvatarPoint(
+      // Dock to the bottom corner of the nearest side: glide both axes so it
+      // visibly slides into the bottom-left / bottom-right corner and "sits".
+      const seated = snapPointToEdge(
         {
           x: upEvent.clientX - dragOffsetRef.current.x,
           y: upEvent.clientY - dragOffsetRef.current.y,
         },
         avatarSize
       );
+      const settle = { type: "spring" as const, stiffness: 260, damping: 28, mass: 0.9 };
+      animate(avatarX, seated.x, settle);
+      animate(avatarY, seated.y, settle);
+      try {
+        window.localStorage.setItem(AVATAR_POSITION_KEY, JSON.stringify({ ...seated, size: avatarSize }));
+      } catch {
+        // Position persistence is optional; docking still works without storage.
+      }
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
@@ -985,12 +1005,6 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
     [mouth]
   );
 
-  const speechBubbleClassName = `absolute top-0 z-[60] hidden w-44 max-w-[68vw] rounded-[1.35rem] border border-primary-accent/45 bg-bg-card/98 px-3 py-2.5 text-[11px] leading-snug text-text-primary shadow-2xl shadow-black/35 ring-1 ring-border-light backdrop-blur-2xl sm:block sm:w-56 sm:text-xs lg:top-2 lg:w-64 lg:text-sm ${
-    speechPlacement === "right"
-      ? "left-[calc(100%-0.25rem)] before:absolute before:left-[-0.45rem] before:top-9 before:h-4 before:w-4 before:rotate-45 before:border-b before:border-l before:border-primary-accent/45 before:bg-bg-card"
-      : "right-[calc(100%-0.25rem)] lg:right-[calc(100%-0.95rem)] before:absolute before:right-[-0.45rem] before:top-9 before:h-4 before:w-4 before:rotate-45 before:border-r before:border-t before:border-primary-accent/45 before:bg-bg-card"
-  }`;
-
   // Listen for external mouth change requests (e.g., button hovers)
   useEffect(() => {
     const handler = (event: Event) => {
@@ -1010,9 +1024,9 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, rotate: -4 }}
-      animate={{ opacity: visible && hasMounted ? 1 : 0, rotate: 0 }}
-      transition={{ type: "spring", stiffness: 240, damping: 20, mass: 0.9, delay: 0.05 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: visible && hasMounted ? 1 : 0 }}
+      transition={{ duration: 0.2, delay: 0.05 }}
       style={{
         x: avatarX,
         y: avatarY,
@@ -1022,28 +1036,88 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
       aria-hidden
       onPointerDown={handleAvatarPointerDown}
     >
-      {showDragPrompt && unlocked && (
-        <motion.div
-          key={currentPromptMessage}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          transition={{ duration: 0.28, ease: "easeOut" }}
-          className={speechBubbleClassName}
-        >
-          <span className="mb-1 flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-text-secondary">
-            <span>{preset.label.replace(" character", "")}</span>
-            <span className="flex items-center gap-1.5 rounded-full border border-primary-accent/30 px-2 py-0.5 tracking-[0.08em]">
-              <span className={isTypingPrompt ? "h-1.5 w-1.5 rounded-full bg-primary-accent animate-pulse" : "h-1.5 w-1.5 rounded-full bg-text-secondary/60"} />
-              {personalityBehavior.label}
-            </span>
-          </span>
-          <span className="block min-h-[2.5rem] pr-1">
-            {typedPromptMessage || currentPromptMessage.slice(0, 1)}
-            {isTypingPrompt && <span className="ml-0.5 inline-block h-4 w-1 translate-y-0.5 animate-pulse rounded-full bg-primary-accent" />}
-          </span>
-        </motion.div>
+      {/* Spawn "poof": fallback dust burst centred on the avatar art (the badge below would
+          otherwise pull a full-box centre downward and misalign it). */}
+      {spawning && spawnFxFailed && (
+        <div className="pointer-events-none absolute left-10 top-[74px] sm:left-14 sm:top-[105px] lg:left-20 lg:top-[150px] z-[58] -translate-x-1/2 -translate-y-1/2">
+          {SPAWN_PUFFS.map((p, i) => (
+            <motion.span
+              key={i}
+              className="absolute rounded-full bg-zinc-400/55 blur-[3px]"
+              style={{ width: p.size, height: p.size }}
+              initial={{ opacity: 0, scale: 0.3, x: 0, y: 0 }}
+              animate={{ opacity: [0, 0.85, 0], scale: [0.3, 1.15, 0.7], x: p.x, y: p.y }}
+              transition={{ duration: 0.85, ease: "easeOut", delay: p.delay }}
+            />
+          ))}
+        </div>
       )}
+
+      {/* Spawn "poof": Lottie smoke/dust burst, centred on the avatar art (half art width/height). */}
+      {spawning && !spawnFxFailed && (
+        <div className="pointer-events-none absolute left-10 top-[74px] sm:left-14 sm:top-[105px] lg:left-20 lg:top-[150px] z-[58] -translate-x-1/2 -translate-y-1/2">
+          <DotLottieReact
+            src={LOTTIE_SRC.spawn}
+            autoplay
+            loop={false}
+            className="h-32 w-32 sm:h-44 sm:w-44 lg:h-60 lg:w-60"
+            dotLottieRefCallback={onLottieError(() => setSpawnFxFailed(true))}
+          />
+        </div>
+      )}
+
+      {/* Dizzy easter egg: cartoon stars orbiting the head on a tilted 3D ring while the eyes spin. */}
+      {dizzy && (
+        <div
+          className="pointer-events-none absolute bottom-full left-10 -mb-2 sm:left-14 lg:left-20 z-[60] -translate-x-1/2"
+          style={{ perspective: "320px" }}
+        >
+          <motion.div
+            className="relative h-14 w-14"
+            style={{ transformStyle: "preserve-3d", rotateX: DIZZY_TILT }}
+            animate={{ rotateZ: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          >
+            {DIZZY_STARS.map((s, i) => (
+              <div
+                key={i}
+                className="absolute left-1/2 top-1/2"
+                style={{
+                  transform: `translate(-50%, -50%) rotateZ(${s.angle}deg) translateY(-${DIZZY_RADIUS}px)`,
+                  transformStyle: "preserve-3d",
+                }}
+              >
+                {/* Counter the ring tilt so the star keeps facing the viewer. */}
+                <div
+                  className="leading-none drop-shadow-[0_0_5px_rgba(250,204,21,0.9)]"
+                  style={{ transform: `rotateX(-${DIZZY_TILT}deg)`, fontSize: s.size }}
+                >
+                  ⭐
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      )}
+
+      {/* Floating thought words: rise from the centre of the head and fade.
+          Outer span owns the horizontal centring (left = half the art width, then -translate-x-1/2);
+          the inner motion.span owns the rise/fade so Framer's transform can't clobber the centring. */}
+      {floaters.map((f) => (
+        <span
+          key={f.id}
+          className="pointer-events-none absolute bottom-full left-10 sm:left-14 lg:left-20 z-[60] -translate-x-1/2"
+        >
+          <motion.span
+            initial={{ opacity: 0, y: -6, scale: 0.7 }}
+            animate={{ opacity: [0, 1, 1, 0], y: -140, scale: 1 }}
+            transition={{ duration: 2.6, ease: "easeOut", times: [0, 0.18, 0.7, 1] }}
+            className="block whitespace-nowrap rounded-full border border-primary-accent/35 bg-bg-card/90 px-3 py-1 text-xs font-semibold text-text-primary shadow-lg shadow-black/20 backdrop-blur-sm sm:text-sm"
+          >
+            {f.text}
+          </motion.span>
+        </span>
+      ))}
       {popupItem && (
         <motion.div
           key={popupItem}
@@ -1058,8 +1132,12 @@ export default function FloatingAvatar({ avatar }: FloatingAvatarProps) {
       )}
       <motion.div
         style={{ y: idleY }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15, delay: 0.45 }}
         className="relative z-10 drop-shadow-[0_10px_25px_rgba(0,0,0,0.25)] pointer-events-auto"
         onClick={triggerTalk}
+        onMouseEnter={handleAvatarHover}
       >
         {cmsAvatarUrl ? (
           // Render CMS-uploaded SVG/image as an external image instead of injecting SVG markup.

@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { getProjects } from "@/lib/sanity.queries";
+import { getProjects, getArticles } from "@/lib/sanity.queries";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ajayrajbhandari.com.np";
 
@@ -9,13 +9,26 @@ type SitemapProject = {
   };
 };
 
+type SitemapArticle = {
+  slug?: {
+    current?: string;
+  };
+  hasBody?: boolean;
+};
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
-    { 
-      url: `${baseUrl}/`, 
+    {
+      url: `${baseUrl}/`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,
+    },
+    {
+      url: `${baseUrl}/writing`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
     },
   ];
 
@@ -38,5 +51,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("Error building sitemap projects", error);
   }
 
-  return [...staticEntries, ...projectEntries];
+  let articleEntries: MetadataRoute.Sitemap = [];
+
+  try {
+    const articles = await getArticles();
+    if (articles && Array.isArray(articles)) {
+      articleEntries = (articles as SitemapArticle[])
+        .filter((article) => article.hasBody && article.slug?.current)
+        .map((article) => ({
+          url: `${baseUrl}/writing/${article.slug!.current}`,
+          lastModified: new Date(),
+          changeFrequency: "monthly" as const,
+          priority: 0.6,
+        }));
+    }
+  } catch (error) {
+    console.error("Error building sitemap articles", error);
+  }
+
+  return [...staticEntries, ...projectEntries, ...articleEntries];
 }

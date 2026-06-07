@@ -10,13 +10,22 @@
 }
 
 .track {
+  /* Single source of truth for the geometry. The thumb travel and the icon
+     positions are all derived from these, so the active icon is always
+     perfectly centred on the sliding thumb. */
+  --track-w: 4.2rem;
+  --track-h: 2.2rem;
+  --thumb: 1.72rem;
+  --inset: 0.22rem;
+  /* horizontal distance the thumb slides; -2px accounts for the 1px border each side */
+  --travel: calc(var(--track-w) - var(--thumb) - (2 * var(--inset)) - 2px);
+  /* shared top so icons and thumb sit on the same vertical centre line */
+  --top: calc((var(--track-h) - var(--thumb)) / 2 - 1px);
+
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 4.2rem;
-  height: 2.2rem;
-  padding: 0 0.55rem;
+  display: block;
+  width: var(--track-w);
+  height: var(--track-h);
   overflow: hidden;
   border: 1px solid var(--theme-toggle-border, var(--border-light));
   border-radius: 999px;
@@ -30,9 +39,12 @@
 
 .sun,
 .moon {
-  position: relative;
+  position: absolute;
+  top: var(--top);
   z-index: 1;
   display: grid;
+  width: var(--thumb);
+  height: var(--thumb);
   place-items: center;
   font-size: 0.82rem;
   opacity: 0.62;
@@ -40,11 +52,14 @@
   transition: color 0.25s ease, opacity 0.25s ease, transform 0.25s ease, filter 0.25s ease;
 }
 
+/* Sun sits over the thumb's left rest position; moon over its right position. */
 .sun {
+  left: var(--inset);
   color: #f59e0b;
 }
 
 .moon {
+  left: calc(var(--inset) + var(--travel));
   color: #a78bfa;
 }
 
@@ -52,17 +67,19 @@
 .moon[data-active="true"] {
   opacity: 1;
   transform: scale(1.08);
-  filter: drop-shadow(0 0 8px currentColor);
+  filter: drop-shadow(0 0 6px currentColor);
 }
 
 .thumb {
+  /* Sits ABOVE the icons so the opaque ball hides the inactive icon behind it,
+     leaving a clean core. Only the active icon shows, glowing on the track. */
   position: absolute;
-  z-index: 0;
-  left: 0.23rem;
-  top: 0.23rem;
+  z-index: 2;
+  left: var(--inset);
+  top: var(--top);
   display: grid;
-  width: 1.72rem;
-  height: 1.72rem;
+  width: var(--thumb);
+  height: var(--thumb);
   place-items: center;
   border-radius: 999px;
   background: var(--theme-toggle-thumb-bg, linear-gradient(135deg, #2e1065, #0891b2));
@@ -80,7 +97,7 @@
 }
 
 .thumb[data-theme="light"] {
-  transform: translateX(1.96rem);
+  transform: translateX(var(--travel));
 }
 
 .toggle:hover .track {
@@ -92,7 +109,7 @@
 }
 
 .toggle:hover .thumb[data-theme="light"] {
-  transform: translateX(1.96rem) scale(1.04);
+  transform: translateX(var(--travel)) scale(1.04);
 }
 
 .toggle:focus-visible {
@@ -102,27 +119,16 @@
 }
 
 @media (max-width: 520px) {
+  /* Only the geometry variables change; travel/top recompute automatically. */
   .track {
-    width: 3.45rem;
-    height: 2rem;
-    padding: 0 0.42rem;
+    --track-w: 3.45rem;
+    --track-h: 2rem;
+    --thumb: 1.54rem;
+    --inset: 0.2rem;
   }
 
   .sun,
   .moon {
     font-size: 0.72rem;
-  }
-
-  .thumb {
-    width: 1.54rem;
-    height: 1.54rem;
-  }
-
-  .thumb[data-theme="light"] {
-    transform: translateX(1.46rem);
-  }
-
-  .toggle:hover .thumb[data-theme="light"] {
-    transform: translateX(1.46rem) scale(1.04);
   }
 }

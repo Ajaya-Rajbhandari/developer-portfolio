@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion as baseMotion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { Card } from "@/components/ui/card";
-import { FaGithub, FaLinkedin, FaTwitter, FaEnvelope, FaDownload, FaExternalLinkAlt, FaCode } from "react-icons/fa";
+import { FaGithub, FaLinkedin, FaTwitter, FaDownload, FaExternalLinkAlt, FaArrowRight, FaCode } from "react-icons/fa";
 import FloatingAvatar, { MouthExpression } from "./floating-avatar";
+import ContactForm from "./contact-form";
 
 type LocalMotionProps = {
   initial?: Record<string, unknown>;
@@ -60,11 +62,14 @@ interface Experience {
 interface Article {
   id: number | string;
   title: string;
+  slug?: string;
   summary: string;
   tags: string[];
   status: string;
   url: string;
   featured?: boolean;
+  coverImage?: string;
+  hasBody?: boolean;
 }
 
 interface ActiveCharacterAvatar {
@@ -339,7 +344,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.5 }}
-          className="relative h-[420px] lg:h-full rounded-3xl overflow-hidden bg-gradient-to-br from-primary-accent/10 via-bg-card to-secondary-accent/10 border border-border-light lg:mt-6"
+          className="relative h-[420px] lg:h-[560px] lg:self-start rounded-3xl overflow-hidden bg-gradient-to-br from-primary-accent/10 via-bg-card to-secondary-accent/10 border border-border-light lg:mt-6"
         >
           <HeroAccent />
           <div className="absolute inset-6 rounded-3xl bg-gradient-to-br from-primary-accent/15 via-secondary-accent/10 to-transparent blur-2xl" />
@@ -351,7 +356,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
             quality={100}
             unoptimized={!!(personalData.profile && personalData.profile.includes("cdn.sanity.io"))}
             priority
-            className="object-cover relative z-10"
+            className="object-cover object-top relative z-10"
           />
           <div className="absolute inset-0 z-20 bg-gradient-to-t from-image-overlay-from via-image-overlay-via to-transparent" />
           <div className="absolute inset-0 z-20 bg-gradient-to-r from-bg-card/45 via-transparent to-bg-card/20" />
@@ -636,6 +641,9 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {featuredArticles.map((article) => {
               const statusLabel = article.status === "published" ? "Published article" : article.status === "draft" ? "Draft in progress" : "Upcoming article";
+              // On-site article page when there is body content; otherwise external link.
+              const internalHref = article.hasBody && article.slug ? `/writing/${article.slug}` : null;
+              const cardClass = "block rounded-3xl border border-border-light bg-surface-soft p-6 hover:border-primary-accent/40 hover:bg-surface-muted transition-all duration-200";
               const cardContent = (
                 <>
                   <p className="text-xs uppercase tracking-wider text-primary-accent font-semibold mb-3">{statusLabel}</p>
@@ -648,13 +656,21 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                       </span>
                     ))}
                   </div>
-                  {article.url && (
+                  {(internalHref || article.url) && (
                     <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-secondary-accent">
-                      Read article <FaExternalLinkAlt />
+                      Read article {internalHref ? <FaArrowRight /> : <FaExternalLinkAlt />}
                     </span>
                   )}
                 </>
               );
+
+              if (internalHref) {
+                return (
+                  <Link key={article.id} href={internalHref} className={cardClass}>
+                    {cardContent}
+                  </Link>
+                );
+              }
 
               return article.url ? (
                 <a
@@ -662,16 +678,25 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
                   href={article.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-3xl border border-border-light bg-surface-soft p-6 hover:border-primary-accent/40 hover:bg-surface-muted transition-all duration-200"
+                  className={cardClass}
                 >
                   {cardContent}
                 </a>
               ) : (
-                <div key={article.id} className="rounded-3xl border border-border-light bg-surface-soft p-6 hover:border-primary-accent/40 hover:bg-surface-muted transition-all duration-200">
+                <div key={article.id} className={cardClass}>
                   {cardContent}
                 </div>
               );
             })}
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/writing"
+              className="inline-flex items-center gap-2 rounded-full border border-primary-accent/30 bg-primary-accent/10 px-6 py-3 text-sm font-semibold text-primary-accent transition-all duration-200 hover:border-primary-accent/60 hover:bg-primary-accent/20"
+            >
+              View all writing <FaArrowRight />
+            </Link>
           </div>
         </Card>
       </motion.section>
@@ -709,15 +734,11 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
             </div>
 
             <div className="rounded-3xl border border-border-light bg-surface-soft p-6 space-y-5">
-              <a
-                href={`mailto:${personalData.email}`}
-                className="w-full px-8 py-4 bg-gradient-to-r from-primary-accent to-button-gradient-to text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-primary-accent/40 transition-all duration-200 hover:scale-[1.02] flex items-center justify-center gap-2"
-                onMouseEnter={() => setAvatarMood("smile")}
-                onMouseLeave={() => setAvatarMood("neutral")}
-                onClick={() => setAvatarMood("talking", 900)}
-              >
-                <FaEnvelope /> {personalData.emailCtaLabel}
-              </a>
+              <ContactForm
+                ctaLabel={personalData.emailCtaLabel}
+                recipientName={personalData.name}
+                onMoodChange={(mood) => setAvatarMood(mood, mood === "talking" ? 900 : 1200)}
+              />
 
               <div className="space-y-3 text-sm text-text-secondary">
                 {personalData.email && (

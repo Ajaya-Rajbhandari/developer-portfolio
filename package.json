@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "@lottiefiles/dotlottie-react": "^0.19.4",
+    "@portabletext/react": "^3.2.4",
     "@react-three/fiber": "^9.6.1",
     "@sanity/client": "^7.14.0",
     "@sanity/color-input": "^6.0.6",

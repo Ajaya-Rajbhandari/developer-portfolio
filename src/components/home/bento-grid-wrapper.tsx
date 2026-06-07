@@ -1,9 +1,10 @@
-import { fetchProjects, fetchSkills, fetchExperiences, fetchPersonalData } from '@/lib/data'
+import { fetchProjects, fetchArticles, fetchSkills, fetchExperiences, fetchPersonalData } from '@/lib/data'
 import BentoGrid from './bento-grid'
 
 export default async function BentoGridWrapper() {
-  const [projects, skills, experiences, personalData] = await Promise.all([
+  const [projects, articles, skills, experiences, personalData] = await Promise.all([
     fetchProjects(),
+    fetchArticles(),
     fetchSkills(),
     fetchExperiences(),
     fetchPersonalData(),
@@ -12,6 +13,7 @@ export default async function BentoGridWrapper() {
   return (
     <BentoGrid
       projects={projects}
+      articles={articles}
       skills={skills}
       experiences={experiences}
       personalData={personalData}

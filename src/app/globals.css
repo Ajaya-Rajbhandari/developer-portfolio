@@ -82,6 +82,11 @@ ul {
   outline-offset: 2px;
 }
 
+.studio-shell [data-ui="NextStudioLayout"],
+.studio-shell [data-ui="Root"] {
+  min-height: calc(100vh - 260px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

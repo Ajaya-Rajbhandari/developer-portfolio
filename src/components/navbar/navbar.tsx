@@ -1,24 +1,50 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { clsx } from "clsx";
+import { usePathname } from "next/navigation";
+import { motion as baseMotion } from "framer-motion";
 import { useEffect } from "react";
 import styles from "./navbar.module.css";
-import { FaHome, FaUser, FaCode, FaBriefcase, FaEnvelope } from "react-icons/fa";
+import { FaHome, FaUser, FaCode, FaBriefcase, FaEnvelope, FaBookOpen } from "react-icons/fa";
 
-const navItems = [
-    { name: "Home", href: "/", icon: FaHome, hash: null },
-    { name: "About", href: "/#about", icon: FaUser, hash: "about" },
-    { name: "Skills", href: "/#skills", icon: FaCode, hash: "skills" },
-    { name: "Projects", href: "/#projects", icon: FaBriefcase, hash: "projects" },
-    { name: "Contact", href: "/#contact", icon: FaEnvelope, hash: "contact" },
+type LocalMotionProps = {
+    initial?: Record<string, unknown>;
+    animate?: Record<string, unknown>;
+    transition?: Record<string, unknown>;
+};
+
+type MotionNavProps = React.ComponentProps<typeof baseMotion.nav> & LocalMotionProps;
+
+const motion = {
+    ...baseMotion,
+    nav: baseMotion.nav as React.ComponentType<MotionNavProps>,
+};
+
+type NavbarLabels = {
+    home?: string;
+    about?: string;
+    skills?: string;
+    projects?: string;
+    writing?: string;
+    contact?: string;
+};
+
+type NavbarProps = {
+    labels?: NavbarLabels;
+};
+
+const buildNavItems = (labels?: NavbarLabels) => [
+    { name: labels?.home || "Home", href: "/", icon: FaHome, hash: null },
+    { name: labels?.about || "About", href: "/#about", icon: FaUser, hash: "about" },
+    { name: labels?.skills || "Skills", href: "/#skills", icon: FaCode, hash: "skills" },
+    { name: labels?.projects || "Projects", href: "/#projects", icon: FaBriefcase, hash: "projects" },
+    { name: labels?.writing || "Writing", href: "/#writing", icon: FaBookOpen, hash: "writing" },
+    { name: labels?.contact || "Contact", href: "/#contact", icon: FaEnvelope, hash: "contact" },
 ];
 
-function Navbar() {
+function Navbar({ labels }: NavbarProps) {
+    const navItems = buildNavItems(labels);
     const pathname = usePathname();
-    const router = useRouter();
 
     // Handle smooth scrolling for hash links
     const handleHashClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string | null) => {

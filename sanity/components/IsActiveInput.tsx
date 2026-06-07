@@ -24,16 +24,26 @@ export const IsActiveInput = (props: IsActiveInputProps) => {
       return
     }
 
+    const baseId = documentId.replace(/^drafts\./, '')
+    const draftId = `drafts.${baseId}`
+    const idsToExclude = [baseId, draftId]
+
     // If trying to deactivate, check if this is the only active profile
     if (newValue === false) {
       try {
-        const otherActiveCount = await client.fetch(
-          `count(*[_type == "personal" && isActive == true && _id != $currentId])`,
-          { currentId: documentId }
+        const { otherActiveCount, currentPublishedIsActive, currentDraftIsActive } = await client.fetch(
+          `{
+            "otherActiveCount": count(*[_type == "personal" && isActive == true && !(_id in $idsToExclude)]),
+            "currentPublishedIsActive": *[_id == $baseId][0].isActive,
+            "currentDraftIsActive": *[_id == $draftId][0].isActive
+          }`,
+          { baseId, draftId, idsToExclude }
         )
 
-        if (otherActiveCount === 0) {
-          setError('Cannot deactivate: This is the only active profile. At least one profile must remain active.')
+        const currentDocumentIsAlreadyActive = currentPublishedIsActive === true || currentDraftIsActive === true
+
+        if (currentDocumentIsAlreadyActive && otherActiveCount === 0) {
+          setError('Cannot deactivate: This is the only active profile. Activate another profile first.')
           return
         }
       } catch (err) {
@@ -46,10 +56,10 @@ export const IsActiveInput = (props: IsActiveInputProps) => {
     if (newValue === true) {
       setIsProcessing(true)
       try {
-        // Get all other active profiles
+        // Get all other active profiles, excluding this document's draft/published pair
         const activeProfiles = await client.fetch(
-          `*[_type == "personal" && isActive == true && _id != $currentId]._id`,
-          { currentId: documentId }
+          `*[_type == "personal" && isActive == true && !(_id in $idsToExclude)]._id`,
+          { idsToExclude }
         )
 
         // Deactivate all other profiles
@@ -64,8 +74,9 @@ export const IsActiveInput = (props: IsActiveInputProps) => {
         // Update the current document
         onChange(PatchEvent.from(set(true)))
         setIsProcessing(false)
-      } catch (err: any) {
-        setError(`Error: ${err.message || 'Failed to deactivate other profiles'}`)
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to deactivate other profiles'
+        setError(`Error: ${message}`)
         setIsProcessing(false)
         return
       }

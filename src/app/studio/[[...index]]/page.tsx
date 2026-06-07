@@ -1,118 +1,48 @@
 'use client'
 
 import Link from 'next/link'
+import { NextStudio } from 'next-sanity/studio'
+import config from '../../../../sanity.config'
 
 export default function StudioPage() {
-  const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || '48v38ttl'
-
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      minHeight: 'calc(100vh - 200px)',
-      flexDirection: 'column',
-      gap: '2rem',
-      padding: '2rem',
-      textAlign: 'center',
-      color: 'var(--text-primary)'
-    }}>
-      <div>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', fontWeight: 'bold' }}>
-          Sanity Studio
-        </h1>
-        <p style={{ marginBottom: '2rem', color: 'var(--text-secondary)', fontSize: '1.125rem' }}>
-          Manage your portfolio content through Sanity Studio
-        </p>
+    <section className="mx-auto min-h-screen w-full max-w-[1440px] px-4 pb-10 pt-28 md:px-8 lg:px-10">
+      <div className="mb-6 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] p-5 shadow-2xl shadow-black/30 backdrop-blur md:p-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-primary-accent">
+              Portfolio CMS
+            </p>
+            <h1 className="mt-2 text-2xl font-bold text-white md:text-4xl">
+              Manage your portfolio content
+            </h1>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400 md:text-base">
+              Update personal information, projects, skills, experience, articles, character settings,
+              navigation labels, footer copy, and availability from one place. The same portfolio navbar
+              remains available above this Studio so you can jump back to each public section quickly.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3 text-sm font-medium">
+            <Link
+              href="/"
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-white hover:border-primary-accent/60 hover:bg-primary-accent/15"
+            >
+              View portfolio
+            </Link>
+            <Link
+              href="/#projects"
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-white hover:border-secondary-accent/60 hover:bg-secondary-accent/15"
+            >
+              Check projects
+            </Link>
+          </div>
+        </div>
       </div>
-      
-      <div style={{ 
-        backgroundColor: 'var(--bg-card)', 
-        padding: '1.5rem', 
-        borderRadius: '1rem', 
-        marginBottom: '2rem',
-        maxWidth: '600px',
-        width: '100%'
-      }}>
-        <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '600' }}>
-          Quick Access Options:
-        </h2>
-        <ol style={{ 
-          textAlign: 'left', 
-          color: 'var(--text-secondary)', 
-          lineHeight: '1.8',
-          paddingLeft: '1.5rem'
-        }}>
-          <li style={{ marginBottom: '0.75rem' }}>
-            <strong style={{ color: 'var(--text-primary)' }}>Local Studio:</strong> Run <code style={{ backgroundColor: 'var(--bg-dark)', padding: '0.25rem 0.5rem', borderRadius: '0.25rem' }}>npx sanity dev</code> in your terminal (opens at <code style={{ backgroundColor: 'var(--bg-dark)', padding: '0.25rem 0.5rem', borderRadius: '0.25rem' }}>localhost:3333</code>)
-          </li>
-          <li style={{ marginBottom: '0.75rem' }}>
-            <strong style={{ color: 'var(--text-primary)' }}>Online Dashboard:</strong> Click the button below to access your project
-          </li>
-        </ol>
+
+      <div className="studio-shell overflow-hidden rounded-3xl border border-white/10 bg-[#0b0f19] shadow-2xl shadow-black/40">
+        <NextStudio config={config} />
       </div>
-      
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <a
-          href={`https://sanity.io/manage/personal/project/${projectId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            padding: '1rem 2rem',
-            backgroundColor: 'var(--primary-accent)',
-            color: 'white',
-            borderRadius: '0.75rem',
-            textDecoration: 'none',
-            fontWeight: '600',
-            transition: 'all 0.2s',
-            display: 'inline-block'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = '0.9'
-            e.currentTarget.style.transform = 'scale(1.05)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = '1'
-            e.currentTarget.style.transform = 'scale(1)'
-          }}
-        >
-          Open Project Dashboard →
-        </a>
-        <Link
-          href="/"
-          style={{
-            padding: '1rem 2rem',
-            border: '2px solid var(--border-light)',
-            color: 'var(--text-primary)',
-            borderRadius: '0.75rem',
-            textDecoration: 'none',
-            fontWeight: '600',
-            transition: 'all 0.2s',
-            display: 'inline-block'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--primary-accent)'
-            e.currentTarget.style.backgroundColor = 'rgba(109, 40, 217, 0.1)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border-light)'
-            e.currentTarget.style.backgroundColor = 'transparent'
-          }}
-        >
-          Back to Portfolio
-        </Link>
-      </div>
-      
-      <p style={{ marginTop: '2rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-        Or visit: <a 
-          href="https://sanity.io/manage" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          style={{ color: 'var(--primary-accent)', textDecoration: 'underline' }}
-        >
-          sanity.io/manage
-        </a> and select your project
-      </p>
-    </div>
+    </section>
   )
 }

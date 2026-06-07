@@ -1,0 +1,38 @@
+export const articlesData = [
+  {
+    id: 'article-building-cms-backed-portfolio',
+    title: 'What a CMS-Backed Developer Portfolio Should Include',
+    summary: 'A practical checklist for structuring a portfolio with editable personal information, case-study projects, skills, writing, SEO metadata, and clear calls to action.',
+    tags: ['Portfolio', 'Sanity CMS', 'Next.js'],
+    status: 'planned',
+    url: '',
+    featured: true,
+  },
+  {
+    id: 'article-structure-small-js-projects',
+    title: 'How I Structure Small JavaScript Projects',
+    summary: 'A practical breakdown of keeping browser projects readable with clear state, event handlers, reusable helper functions, and simple validation.',
+    tags: ['JavaScript', 'Project structure', 'Frontend'],
+    status: 'planned',
+    url: '',
+    featured: true,
+  },
+  {
+    id: 'article-responsive-feedback',
+    title: 'Building Responsive Interfaces with Better Feedback',
+    summary: 'Notes on improving user experience with responsive layouts, hover states, loading states, empty states, and clear visual hierarchy.',
+    tags: ['Responsive design', 'UI', 'CSS'],
+    status: 'planned',
+    url: '',
+    featured: true,
+  },
+  {
+    id: 'article-teaching-programming-concepts',
+    title: 'Lessons from Teaching Programming Concepts',
+    summary: 'How explaining technical ideas to learners improves communication, documentation, debugging, and problem-solving as a developer.',
+    tags: ['Teaching', 'Communication', 'Learning'],
+    status: 'planned',
+    url: '',
+    featured: false,
+  },
+]

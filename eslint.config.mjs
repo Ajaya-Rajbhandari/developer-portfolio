@@ -11,7 +11,13 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "dist/**",
+    "node_modules/**",
     "next-env.d.ts",
+    // Non-app and legacy assets should not block the active portfolio lint check.
+    "_legacy_backup/**",
+    "public/**",
+    "sanity/**",
   ]),
 ]);
 

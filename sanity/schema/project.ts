@@ -32,7 +32,22 @@ export default defineType({
       name: 'description',
       title: 'Description',
       type: 'text',
+      rows: 4,
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'problem',
+      title: 'Problem / Context',
+      type: 'text',
+      rows: 3,
+      description: 'What problem, need, or user pain point did this project address?',
+    }),
+    defineField({
+      name: 'outcome',
+      title: 'Outcome / Result',
+      type: 'text',
+      rows: 3,
+      description: 'What changed because of this project? Add measurable results where possible.',
     }),
     defineField({
       name: 'image',

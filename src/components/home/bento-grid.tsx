@@ -336,13 +336,13 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
 
         {/* Right: Profile Image */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.5 }}
-          className="relative h-[420px] lg:h-full rounded-3xl overflow-hidden group bg-gradient-to-br from-primary-accent/10 via-bg-card to-secondary-accent/10 border border-border-light lg:mt-6"
+          className="relative h-[420px] lg:h-full rounded-3xl overflow-hidden bg-gradient-to-br from-primary-accent/10 via-bg-card to-secondary-accent/10 border border-border-light lg:mt-6"
         >
           <HeroAccent />
-          <div className="absolute inset-6 rounded-3xl bg-gradient-to-br from-primary-accent/15 via-secondary-accent/10 to-transparent blur-2xl group-hover:blur-3xl transition-all duration-500" />
+          <div className="absolute inset-6 rounded-3xl bg-gradient-to-br from-primary-accent/15 via-secondary-accent/10 to-transparent blur-2xl" />
           <Image
             src={personalData.profile || "/profile.png"}
             alt="Profile"
@@ -351,7 +351,7 @@ export default function BentoGrid({ projects, articles, skills, experiences, per
             quality={100}
             unoptimized={!!(personalData.profile && personalData.profile.includes("cdn.sanity.io"))}
             priority
-            className="object-cover relative z-10 transition-transform duration-700 group-hover:scale-110"
+            className="object-cover relative z-10"
           />
           <div className="absolute inset-0 z-20 bg-gradient-to-t from-image-overlay-from via-image-overlay-via to-transparent" />
           <div className="absolute inset-0 z-20 bg-gradient-to-r from-bg-card/45 via-transparent to-bg-card/20" />
